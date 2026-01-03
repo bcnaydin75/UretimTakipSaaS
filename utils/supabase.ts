@@ -17,12 +17,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export interface Order {
     id: string
     customer_name: string
+    company_name: string | null // Firma adı
     product_name: string
     dimensions: string | null
     status: 'Kesim' | 'Döşeme' | 'Boya' | 'Paket' | 'Sevk'
     delivery_date: string | null
     is_urgent: boolean
     price: number // Fiyat alanı (TL cinsinden)
+    quantity: number | null
+    unit_price: number | null
+    is_shipped: boolean | null
     created_at: string
     updated_at: string
 }
@@ -30,11 +34,22 @@ export interface Order {
 // Yeni sipariş oluşturma tipi - price eklendi
 export interface NewOrder {
     customer_name: string
+    company_name?: string | null // Firma adı
     product_name: string
     dimensions?: string
     delivery_date?: string
     is_urgent?: boolean
     price: number // Fiyat zorunlu alan
+    quantity?: number
+    unit_price?: number
+}
+
+// Müşteri tipi
+export interface Customer {
+    id: string
+    name: string
+    company_name: string | null
+    created_at: string
 }
 
 // Ayarlar tipi

@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation'
 import { NewOrderModal } from '@/components/NewOrderModal'
 import { getDashboardStats, getUrgentOrders, getMonthlyRevenue } from '@/app/actions/orders'
 import type { Order } from '@/utils/supabase'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 /**
  * Dashboard Sayfası
@@ -25,6 +26,7 @@ import type { Order } from '@/utils/supabase'
  */
 
 export default function Dashboard() {
+    const { t, language } = useLanguage()
     const router = useRouter() // Next.js router eklendi
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -110,10 +112,10 @@ export default function Dashboard() {
             >
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-                        Dashboard
+                        {t('dashboard')}
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400">
-                        Üretim durumunuzun genel görünümü
+                        {language === 'tr' ? 'Üretim durumunuzun genel görünümü' : language === 'en' ? 'Overview of your production status' : 'نظرة عامة على حالة الإنتاج'}
                     </p>
                 </div>
                 <motion.button
@@ -123,7 +125,7 @@ export default function Dashboard() {
                     className="flex items-center gap-2 px-6 py-3 bg-indigo-500 text-white rounded-xl font-semibold hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all"
                 >
                     <Plus className="w-5 h-5" />
-                    Yeni Sipariş Ekle
+                    {t('new_order')}
                 </motion.button>
             </motion.div>
 
@@ -151,7 +153,7 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                    Aktif Siparişler
+                                    {t('active_orders')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-blue-600 dark:text-blue-400">
                                     {stats.aktifSiparisler}
@@ -173,7 +175,7 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                    Kritik Gecikmeler
+                                    {t('critical_delays')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-red-600 dark:text-red-400">
                                     {stats.kritikGecikmeler}
@@ -195,7 +197,7 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                    Boyahanedeki İşler
+                                    {t('paint_shop')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-orange-600 dark:text-orange-400">
                                     {stats.boyahanedekiIsler}
@@ -217,7 +219,7 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                    Aylık Gelir
+                                    {t('monthly_revenue')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-green-600 dark:text-green-400">
                                     ₺{new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(monthlyRevenue)}

@@ -13,11 +13,14 @@ export async function createOrder(orderData: NewOrder) {
             .insert([
                 {
                     customer_name: orderData.customer_name,
+                    company_name: orderData.company_name || null,
                     product_name: orderData.product_name,
                     dimensions: orderData.dimensions || null,
                     delivery_date: orderData.delivery_date || null,
                     is_urgent: orderData.is_urgent || false,
                     price: orderData.price, // Fiyat zorunlu alan - sayısal değer olarak kaydediliyor
+                    quantity: orderData.quantity || 1,
+                    unit_price: orderData.unit_price || 0,
                     status: 'Kesim', // Varsayılan status
                 },
             ])
@@ -290,11 +293,12 @@ export async function getUrgentOrders() {
 }
 
 /**
- * Ayarları getir - Settings tablosundan key-value çiftlerini al
+ * Ayarları getir - Settings tablosundan tüm key-value çiftlerini çek
+ * .match() kullanmadan, tüm kayıtları çekip key-value çiftlerine dönüştürür
  */
 export async function getSettings() {
     try {
-        // Tüm ayarları çek
+        // Tüm ayarları çek - key hatasını önlemek için .match() kullanmıyoruz
         const { data, error } = await supabase
             .from('settings')
             .select('key, value')
@@ -320,22 +324,95 @@ export async function getSettings() {
 }
 
 /**
- * Ayarları güncelle - Her bir ayar için ayrı ayrı upsert işlemi
+ * Ayarları güncelle - Sabit ID üzerinden upsert işlemi (key column hatasını önler)
+ * .match({ key: '...' }) kullanmadan, sadece sabit ID ile upsert yapar
  */
 export async function updateSettings(settings: Record<string, string>) {
     try {
-        // Her bir ayar için ayrı ayrı upsert işlemi yap
-        for (const [key, value] of Object.entries(settings)) {
-            const { error } = await supabase
-                .from('settings')
-                .upsert(
-                    { key, value },
-                    { onConflict: 'key' }
-                )
+        // Sabit ID - SQL'de oluşturulan ID
+        const SETTINGS_ID = '00000000-0000-0000-0000-000000000001'
 
-            if (error) {
-                console.error(`Supabase error updating ${key}:`, error)
-                return { success: false, error: error.message }
+        // Önce tüm mevcut ayarları çek (key kullanmadan, sadece ID ile)
+        const { data: allSettings, error: fetchError } = await supabase
+            .from('settings')
+            .select('id, key, value')
+
+        if (fetchError) {
+            console.error('Supabase error fetching settings:', fetchError)
+            return { success: false, error: fetchError.message }
+        }
+
+        // Her bir ayar için key-value çifti olarak kaydet
+        for (const [key, value] of Object.entries(settings)) {
+            // Mevcut kayıtları kontrol et (key sütununu kullanmadan, memory'deki listeden)
+            const existing = allSettings?.find((s: { key: string }) => s.key === key)
+
+            if (existing && existing.id) {
+                // Mevcut kaydı güncelle (ID ile - key kullanmadan, .match() kullanmadan)
+                const { error: updateError } = await supabase
+                    .from('settings')
+                    .update({ value })
+                    .eq('id', existing.id)
+
+                if (updateError) {
+                    console.error(`Supabase error updating ${key}:`, updateError)
+                    return { success: false, error: updateError.message }
+                }
+            } else {
+                // Yeni kayıt oluştur - Sabit ID kullan
+                const { error: insertError } = await supabase
+                    .from('settings')
+                    .insert([{
+                        id: SETTINGS_ID,
+                        key,
+                        value
+                    }])
+
+                if (insertError) {
+                    // Eğer ID conflict hatası varsa, tüm kayıtları tekrar çek ve ID ile güncelle
+                    if (insertError.code === '23505') {
+                        // Tüm kayıtları tekrar çek
+                        const { data: refreshedSettings, error: refreshError } = await supabase
+                            .from('settings')
+                            .select('id, key, value')
+
+                        if (refreshError) {
+                            console.error(`Supabase error refreshing settings:`, refreshError)
+                            return { success: false, error: refreshError.message }
+                        }
+
+                        // Key ile eşleşen kaydı bul (memory'deki listeden - key kullanmadan)
+                        const matchingSetting = refreshedSettings?.find((s: { key: string }) => s.key === key)
+                        if (matchingSetting && matchingSetting.id) {
+                            // Mevcut kaydı güncelle (ID ile - .match() kullanmadan)
+                            const { error: updateError } = await supabase
+                                .from('settings')
+                                .update({ value })
+                                .eq('id', matchingSetting.id)
+
+                            if (updateError) {
+                                console.error(`Supabase error updating ${key}:`, updateError)
+                                return { success: false, error: updateError.message }
+                            }
+                        } else {
+                            // Key ile eşleşen kayıt yok, yeni kayıt oluştur (farklı ID ile)
+                            const { error: newInsertError } = await supabase
+                                .from('settings')
+                                .insert([{
+                                    key,
+                                    value
+                                }])
+
+                            if (newInsertError) {
+                                console.error(`Supabase error inserting ${key}:`, newInsertError)
+                                return { success: false, error: newInsertError.message }
+                            }
+                        }
+                    } else {
+                        console.error(`Supabase error inserting ${key}:`, insertError)
+                        return { success: false, error: insertError.message }
+                    }
+                }
             }
         }
 
@@ -345,6 +422,128 @@ export async function updateSettings(settings: Record<string, string>) {
         return { success: true }
     } catch (error) {
         console.error('Error updating settings:', error)
+        return { success: false, error: 'Bir hata oluştu' }
+    }
+}
+
+/**
+ * Siparişi sil
+ */
+export async function deleteOrder(orderId: string) {
+    try {
+        const { error } = await supabase
+            .from('orders')
+            .delete()
+            .eq('id', orderId)
+
+        if (error) {
+            console.error('Supabase error:', error)
+            return { success: false, error: error.message }
+        }
+
+        // Sayfaları yeniden validate et
+        revalidatePath('/')
+        revalidatePath('/uretim')
+        revalidatePath('/istatistikler')
+
+        return { success: true }
+    } catch (error) {
+        console.error('Error deleting order:', error)
+        return { success: false, error: 'Bir hata oluştu' }
+    }
+}
+
+/**
+ * Müşterileri getir (customers tablosundan)
+ */
+export async function getCustomers() {
+    try {
+        const { data, error } = await supabase
+            .from('customers')
+            .select('*')
+            .order('name', { ascending: true })
+
+        if (error) {
+            console.error('Supabase error:', error)
+            return { success: false, error: error.message, data: [] }
+        }
+
+        return { success: true, data: data || [] }
+    } catch (error) {
+        console.error('Error fetching customers:', error)
+        return { success: false, error: 'Bir hata oluştu', data: [] }
+    }
+}
+
+/**
+ * Orders tablosundan benzersiz müşteri isimlerini ve en son kullanılan company_name'i getir
+ */
+export async function getUniqueCustomersFromOrders() {
+    try {
+        // Tüm siparişleri çek
+        const { data, error } = await supabase
+            .from('orders')
+            .select('customer_name, company_name, created_at')
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error('Supabase error:', error)
+            return { success: false, error: error.message, data: [] }
+        }
+
+        if (!data || data.length === 0) {
+            return { success: true, data: [] }
+        }
+
+        // Benzersiz müşteri isimlerini ve her biri için en son kullanılan company_name'i bul
+        const customerMap = new Map<string, { customer_name: string; company_name: string | null }>()
+
+        data.forEach((order) => {
+            const customerName = order.customer_name
+            if (!customerMap.has(customerName)) {
+                // İlk kez görülen müşteri - en son kullanılan company_name'i kaydet
+                customerMap.set(customerName, {
+                    customer_name: customerName,
+                    company_name: order.company_name,
+                })
+            }
+        })
+
+        // Map'i array'e çevir ve alfabetik sırala
+        const uniqueCustomers = Array.from(customerMap.values()).sort((a, b) =>
+            a.customer_name.localeCompare(b.customer_name, 'tr')
+        )
+
+        return { success: true, data: uniqueCustomers }
+    } catch (error) {
+        console.error('Error fetching unique customers from orders:', error)
+        return { success: false, error: 'Bir hata oluştu', data: [] }
+    }
+}
+
+/**
+ * Sevkiyatı onayla - is_shipped true yap
+ */
+export async function confirmShipment(orderId: string) {
+    try {
+        const { error } = await supabase
+            .from('orders')
+            .update({ is_shipped: true })
+            .eq('id', orderId)
+
+        if (error) {
+            console.error('Supabase error:', error)
+            return { success: false, error: error.message }
+        }
+
+        // Sayfaları yeniden validate et
+        revalidatePath('/')
+        revalidatePath('/uretim')
+        revalidatePath('/satis-arsivi')
+
+        return { success: true }
+    } catch (error) {
+        console.error('Error confirming shipment:', error)
         return { success: false, error: 'Bir hata oluştu' }
     }
 }

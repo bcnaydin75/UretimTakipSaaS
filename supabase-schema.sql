@@ -59,3 +59,47 @@ VALUES ('atolye_adi', 'İnegöl Mobilya Ltd.'),
         'adres',
         'İnegöl Organize Sanayi Bölgesi, 16400 İnegöl/Bursa'
     ) ON CONFLICT (key) DO NOTHING;
+-- 1. Müşteriler ve Firma Bilgileri Tablosu
+CREATE TABLE IF NOT EXISTS customers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT UNIQUE NOT NULL,
+    company_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- 2. Mevcut Orders Tablosuna Yeni Sütunlar Ekle
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS unit_price DECIMAL(12, 2) DEFAULT 0;
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES customers(id);
+-- 3. Aylık Raporlar İçin Görünüm (View) - Otomatik sıfırlama mantığı için
+CREATE OR REPLACE VIEW monthly_stats AS
+SELECT to_char(created_at, 'YYYY-MM') as month_id,
+    SUM(price) as total_profit,
+    COUNT(id) as total_sales,
+    COUNT(DISTINCT customer_name) as unique_customers
+FROM orders
+GROUP BY month_id;
+// Son Ekledıgım Kodlarrr -- 1. Müşteriler ve Firma Bilgileri Tablosu
+CREATE TABLE IF NOT EXISTS customers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT UNIQUE NOT NULL,
+    company_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- 2. Mevcut Orders Tablosuna Yeni Sütunlar Ekle
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS unit_price DECIMAL(12, 2) DEFAULT 0;
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES customers(id);
+-- 3. Aylık Raporlar İçin Görünüm (View) - Otomatik sıfırlama mantığı için
+CREATE OR REPLACE VIEW monthly_stats AS
+SELECT to_char(created_at, 'YYYY-MM') as month_id,
+    SUM(price) as total_profit,
+    COUNT(id) as total_sales,
+    COUNT(DISTINCT customer_name) as unique_customers
+FROM orders
+GROUP BY month_id;

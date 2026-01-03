@@ -10,10 +10,14 @@ import {
     Settings,
     Menu,
     X,
-    Archive
+    Archive,
+    Calendar,
+    LogOut
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ThemeToggle } from './ThemeToggle'
+import { useAuth } from '@/components/AuthProvider'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 /**
  * Sidebar Bileşeni
@@ -29,16 +33,20 @@ interface MenuItem {
     icon: React.ComponentType<{ className?: string }>
 }
 
-// Menü öğelerini tanımlıyoruz
-const menuItems: MenuItem[] = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Üretim Takibi', href: '/uretim', icon: ClipboardList },
-    { name: 'Satış Arşivi', href: '/satis-arsivi', icon: Archive },
-    { name: 'İstatistikler', href: '/istatistikler', icon: BarChart3 },
-    { name: 'Ayarlar', href: '/ayarlar', icon: Settings },
-]
-
 export function Sidebar() {
+    const { signOut } = useAuth()
+    const { t } = useLanguage()
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+
+    // Menü öğelerini dil desteği ile tanımlıyoruz
+    const menuItems: MenuItem[] = [
+        { name: t('dashboard'), href: '/', icon: LayoutDashboard },
+        { name: t('production_tracking'), href: '/uretim', icon: ClipboardList },
+        { name: t('sales_archive'), href: '/satis-arsivi', icon: Archive },
+        { name: t('general_archive'), href: '/arsiv', icon: Calendar },
+        { name: t('statistics'), href: '/istatistikler', icon: BarChart3 },
+        { name: t('settings'), href: '/ayarlar', icon: Settings },
+    ]
     // useState: Sidebar'ın açık/kapalı durumunu tutar
     // Mobilde başlangıçta kapalı, desktop'ta açık olmalı
     const [isOpen, setIsOpen] = useState(false)
@@ -208,6 +216,17 @@ export function Sidebar() {
                     })}
                 </nav>
 
+                {/* Çıkış Yap Butonu */}
+                <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+                    <button
+                        onClick={() => setShowLogoutConfirm(true)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-medium">{t('logout')}</span>
+                    </button>
+                </div>
+
                 {/* Sidebar Footer */}
                 <div className="
           p-4 
@@ -216,9 +235,58 @@ export function Sidebar() {
           text-sm 
           text-slate-500 dark:text-slate-400
         ">
-                    <p>© 2024 Mobilya Atölyesi</p>
+                    <p>© Aray Mobilya İnegöl Atolyesi 1</p>
                 </div>
             </motion.aside>
+
+            {/* Çıkış Onay Modal */}
+            <AnimatePresence>
+                {showLogoutConfirm && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowLogoutConfirm(false)}
+                            className="fixed inset-0 bg-black/50 z-50"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6">
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">
+                                    {t('logout_confirm_title')}
+                                </h3>
+                                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                                    {t('logout_confirm_message')}
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowLogoutConfirm(false)}
+                                        className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        {t('no')}
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            await signOut()
+                                            setShowLogoutConfirm(false)
+                                        }}
+                                        className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        {t('yes_logout')}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </>
     )
 }

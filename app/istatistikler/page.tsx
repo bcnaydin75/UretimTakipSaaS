@@ -10,8 +10,6 @@ import {
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import {
-    AreaChart,
-    Area,
     BarChart,
     Bar,
     XAxis,
@@ -23,6 +21,7 @@ import {
 } from 'recharts'
 import { getAllOrders, getDashboardStats, getMonthlyRevenue } from '@/app/actions/orders'
 import type { Order } from '@/utils/supabase'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 /**
  * İstatistikler Sayfası
@@ -32,6 +31,7 @@ import type { Order } from '@/utils/supabase'
  */
 
 export default function Istatistikler() {
+    const { t, language } = useLanguage()
     const [loading, setLoading] = useState(true)
     const [orders, setOrders] = useState<Order[]>([])
     const [stats, setStats] = useState({
@@ -58,7 +58,8 @@ export default function Istatistikler() {
 
             if (ordersResult.success) {
                 setOrders(ordersResult.data)
-                processChartData(ordersResult.data)
+                const monthlyData = calculateMonthlyProduction(ordersResult.data)
+                setMonthlyProduction(monthlyData)
             }
 
             if (statsResult.success) {
@@ -100,54 +101,41 @@ export default function Istatistikler() {
         }
     }
 
-    // Haftalık veri işleme
-    const processChartData = (ordersData: Order[]) => {
-        // Son 7 günün verilerini hazırla
-        const last7Days = []
-        const today = new Date()
+    // Aylık üretim verilerini hesapla
+    const calculateMonthlyProduction = (ordersData: Order[]) => {
+        const monthlyData: Record<string, { total: number; year: number; month: number }> = {}
+        const monthNames = [
+            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+        ]
 
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date(today)
-            date.setDate(date.getDate() - i)
-            const dateStr = date.toISOString().split('T')[0]
+        ordersData.forEach((order) => {
+            const date = new Date(order.created_at)
+            const year = date.getFullYear()
+            const month = date.getMonth()
+            const monthName = `${monthNames[month]} ${year}`
+            const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`
 
-            // O gün oluşturulan siparişleri say
-            const dayOrders = ordersData.filter((o) => {
-                const orderDate = new Date(o.created_at).toISOString().split('T')[0]
-                return orderDate === dateStr
-            })
+            if (!monthlyData[monthKey]) {
+                monthlyData[monthKey] = { total: 0, year, month }
+            }
 
-            // Ürün tiplerine göre grupla (basit bir yaklaşım)
-            const koltuk = dayOrders.filter((o) =>
-                o.product_name.toLowerCase().includes('koltuk')
-            ).length
-            const masa = dayOrders.filter((o) =>
-                o.product_name.toLowerCase().includes('masa')
-            ).length
-            const dolap = dayOrders.filter((o) =>
-                o.product_name.toLowerCase().includes('dolap')
-            ).length
+            // quantity sütunundan adet bilgisini al (varsa, yoksa 1)
+            const quantity = order.quantity || 1
+            monthlyData[monthKey].total += quantity
+        })
 
-            last7Days.push({
-                gun: date.toLocaleDateString('tr-TR', { weekday: 'short' }),
-                koltuk,
-                masa,
-                dolap,
-            })
-        }
-
-        setHaftalikVeri(last7Days)
+        // Ayları tarih sırasına göre sırala (en yeni önce)
+        return Object.entries(monthlyData)
+            .map(([key, data]) => ({
+                month: `${monthNames[data.month]} ${data.year}`,
+                total: data.total,
+                sortKey: `${data.year}-${String(data.month + 1).padStart(2, '0')}`
+            }))
+            .sort((a, b) => b.sortKey.localeCompare(a.sortKey))
     }
 
-    const [haftalikVeri, setHaftalikVeri] = useState([
-        { gun: 'Pzt', koltuk: 0, masa: 0, dolap: 0 },
-        { gun: 'Sal', koltuk: 0, masa: 0, dolap: 0 },
-        { gun: 'Çar', koltuk: 0, masa: 0, dolap: 0 },
-        { gun: 'Per', koltuk: 0, masa: 0, dolap: 0 },
-        { gun: 'Cum', koltuk: 0, masa: 0, dolap: 0 },
-        { gun: 'Cmt', koltuk: 0, masa: 0, dolap: 0 },
-        { gun: 'Paz', koltuk: 0, masa: 0, dolap: 0 },
-    ])
+    const [monthlyProduction, setMonthlyProduction] = useState<Array<{ month: string; total: number }>>([])
 
     // Aşamaya göre iş dağılımı
     const asamaDagilimi = [
@@ -182,10 +170,10 @@ export default function Istatistikler() {
                 transition={{ duration: 0.4 }}
             >
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-                    İstatistikler
+                    {t('statistics')}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400">
-                    Üretim performansınızı analiz edin
+                    {language === 'tr' ? 'Üretim performansınızı analiz edin' : language === 'en' ? 'Analyze your production performance' : 'حلل أداء الإنتاج'}
                 </p>
             </motion.div>
 
@@ -212,7 +200,7 @@ export default function Istatistikler() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    Aylık Üretim
+                                    {t('monthly_production')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-slate-800 dark:text-slate-200">
                                     {stats.aylikUretim}
@@ -233,7 +221,7 @@ export default function Istatistikler() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    Ortalama Tamamlanma
+                                    {t('average_completion')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-slate-800 dark:text-slate-200">
                                     {stats.ortalamaTamamlanma}
@@ -254,7 +242,7 @@ export default function Istatistikler() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    Aktif Müşteri
+                                    {t('active_customers')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-slate-800 dark:text-slate-200">
                                     {stats.aktifMusteri}
@@ -275,7 +263,7 @@ export default function Istatistikler() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    Aylık Gelir
+                                    {t('monthly_revenue')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-slate-800 dark:text-slate-200">
                                     {stats.aylikGelir}
@@ -289,7 +277,7 @@ export default function Istatistikler() {
                 </div>
             )}
 
-            {/* Haftalık Üretim Performansı - Area Chart */}
+            {/* Aylık Üretim Performansı Tablosu */}
             {loading ? (
                 <div className="mt-8 bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
                     <div className="h-64 flex items-center justify-center">
@@ -303,72 +291,51 @@ export default function Istatistikler() {
                     transition={{ duration: 0.4, delay: 0.4 }}
                     className="mt-8 bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700"
                 >
-                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">
-                        📊 Haftalık Üretim Performansı
+                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-6">
+                        📊 {t('monthly_production_performance')}
                     </h2>
-                    <ResponsiveContainer width="100%" height={350}>
-                        <AreaChart data={haftalikVeri}>
-                            <defs>
-                                <linearGradient id="colorKoltuk" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                </linearGradient>
-                                <linearGradient id="colorMasa" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                </linearGradient>
-                                <linearGradient id="colorDolap" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
-                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
-                            <XAxis
-                                dataKey="gun"
-                                stroke="#64748b"
-                                className="dark:stroke-slate-400"
-                            />
-                            <YAxis
-                                stroke="#64748b"
-                                className="dark:stroke-slate-400"
-                            />
-                            <Tooltip
-                                contentStyle={{
-                                    backgroundColor: '#ffffff',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                }}
-                            />
-                            <Legend />
-                            <Area
-                                type="monotone"
-                                dataKey="koltuk"
-                                stackId="1"
-                                stroke="#6366f1"
-                                fillOpacity={1}
-                                fill="url(#colorKoltuk)"
-                                name="Koltuk"
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="masa"
-                                stackId="1"
-                                stroke="#3b82f6"
-                                fillOpacity={1}
-                                fill="url(#colorMasa)"
-                                name="Masa"
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="dolap"
-                                stackId="1"
-                                stroke="#8b5cf6"
-                                fillOpacity={1}
-                                fill="url(#colorDolap)"
-                                name="Dolap"
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                    {monthlyProduction.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-slate-200 dark:border-slate-700">
+                                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                            {t('month')}
+                                        </th>
+                                        <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                            {t('total_quantity')}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {monthlyProduction.map((item, index) => (
+                                        <motion.tr
+                                            key={item.month}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ duration: 0.3, delay: index * 0.05 }}
+                                            className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                                        >
+                                            <td className="py-4 px-4 text-slate-800 dark:text-slate-200 font-medium">
+                                                {item.month}
+                                            </td>
+                                            <td className="py-4 px-4 text-right">
+                                                <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                                                    {item.total.toLocaleString('tr-TR')} {language === 'tr' ? 'Adet' : language === 'en' ? 'Pcs' : 'قطعة'}
+                                                </span>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-slate-500 dark:text-slate-400">
+                                Henüz üretim verisi bulunmuyor
+                            </p>
+                        </div>
+                    )}
                 </motion.div>
             )}
 
