@@ -36,9 +36,9 @@ export default function Istatistikler() {
     const [orders, setOrders] = useState<Order[]>([])
     const [stats, setStats] = useState({
         aylikUretim: 0,
-        ortalamaTamamlanma: '0 gün',
+        ortalamaTamamlanma: `0 ${t('days')}`,
         aktifMusteri: 0,
-        aylikGelir: '₺0',
+        aylikGelir: '0',
     })
 
     useEffect(() => {
@@ -89,9 +89,9 @@ export default function Istatistikler() {
 
                 setStats({
                     aylikUretim: thisMonthOrders.length,
-                    ortalamaTamamlanma: `${avgDays} gün`,
+                    ortalamaTamamlanma: `${avgDays} ${t('days')}`,
                     aktifMusteri: uniqueCustomers,
-                    aylikGelir: `₺${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(revenue)}`, // Veritabanından gelen gerçek gelir - Türkçe format
+                    aylikGelir: `${t('currency_symbol')}${new Intl.NumberFormat(language === 'tr' ? 'tr-TR' : language === 'en' ? 'en-US' : 'ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(revenue)}`,
                 })
             }
         } catch (error) {
@@ -104,16 +104,15 @@ export default function Istatistikler() {
     // Aylık üretim verilerini hesapla
     const calculateMonthlyProduction = (ordersData: Order[]) => {
         const monthlyData: Record<string, { total: number; year: number; month: number }> = {}
-        const monthNames = [
-            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+        const monthKeys = [
+            'january', 'february', 'march', 'april', 'may', 'june',
+            'july', 'august', 'september', 'october', 'november', 'december'
         ]
 
         ordersData.forEach((order) => {
             const date = new Date(order.created_at)
             const year = date.getFullYear()
             const month = date.getMonth()
-            const monthName = `${monthNames[month]} ${year}`
             const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`
 
             if (!monthlyData[monthKey]) {
@@ -128,7 +127,7 @@ export default function Istatistikler() {
         // Ayları tarih sırasına göre sırala (en yeni önce)
         return Object.entries(monthlyData)
             .map(([key, data]) => ({
-                month: `${monthNames[data.month]} ${data.year}`,
+                month: `${t(monthKeys[data.month])} ${data.year}`,
                 total: data.total,
                 sortKey: `${data.year}-${String(data.month + 1).padStart(2, '0')}`
             }))
@@ -140,23 +139,23 @@ export default function Istatistikler() {
     // Aşamaya göre iş dağılımı
     const asamaDagilimi = [
         {
-            asama: 'Kesim',
+            asama: t('cutting'),
             isSayisi: orders.filter((o) => o.status === 'Kesim').length,
         },
         {
-            asama: 'Döşeme',
+            asama: t('upholstery'),
             isSayisi: orders.filter((o) => o.status === 'Döşeme').length,
         },
         {
-            asama: 'Boya',
+            asama: t('paint'),
             isSayisi: orders.filter((o) => o.status === 'Boya').length,
         },
         {
-            asama: 'Paket',
+            asama: t('package'),
             isSayisi: orders.filter((o) => o.status === 'Paket').length,
         },
         {
-            asama: 'Sevk',
+            asama: t('shipment'),
             isSayisi: orders.filter((o) => o.status === 'Sevk').length,
         },
     ]
@@ -173,7 +172,7 @@ export default function Istatistikler() {
                     {t('statistics')}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400">
-                    {language === 'tr' ? 'Üretim performansınızı analiz edin' : language === 'en' ? 'Analyze your production performance' : 'حلل أداء الإنتاج'}
+                    {t('statistics_description')}
                 </p>
             </motion.div>
 
@@ -321,7 +320,7 @@ export default function Istatistikler() {
                                             </td>
                                             <td className="py-4 px-4 text-right">
                                                 <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                                                    {item.total.toLocaleString('tr-TR')} {language === 'tr' ? 'Adet' : language === 'en' ? 'Pcs' : 'قطعة'}
+                                                    {item.total.toLocaleString(language === 'tr' ? 'tr-TR' : language === 'en' ? 'en-US' : 'ar-SA')} {t('pcs')}
                                                 </span>
                                             </td>
                                         </motion.tr>
@@ -332,7 +331,7 @@ export default function Istatistikler() {
                     ) : (
                         <div className="text-center py-12">
                             <p className="text-slate-500 dark:text-slate-400">
-                                Henüz üretim verisi bulunmuyor
+                                {t('no_production_data_yet')}
                             </p>
                         </div>
                     )}
@@ -354,7 +353,7 @@ export default function Istatistikler() {
                     className="mt-8 bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700"
                 >
                     <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">
-                        📈 Aşamaya Göre İş Dağılımı
+                        📈 {t('stage_distribution')}
                     </h2>
                     <ResponsiveContainer width="100%" height={350}>
                         <BarChart data={asamaDagilimi}>
@@ -379,7 +378,7 @@ export default function Istatistikler() {
                                 dataKey="isSayisi"
                                 fill="#6366f1"
                                 radius={[8, 8, 0, 0]}
-                                name="İş Sayısı"
+                                name={t('job_count')}
                             />
                         </BarChart>
                     </ResponsiveContainer>

@@ -26,10 +26,10 @@ export default function Ayarlar() {
   const { showToast } = useToast()
 
   // Loading durumu
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Genel Ayarlar - Supabase'den yüklenecek
+  // Genel Ayarlar - Form her zaman boş başlasın
   const [genelAyarlar, setGenelAyarlar] = useState({
     atolyeAdi: '',
     vergiNo: '',
@@ -40,46 +40,17 @@ export default function Ayarlar() {
     hesapSahibi: '',
   })
 
-  // Sayfa yüklendiğinde ayarları Supabase'den çek
-  useEffect(() => {
-    fetchSettings()
-  }, [])
-
-  // Ayarları Supabase'den yükle
-  const fetchSettings = async () => {
-    setLoading(true)
-    try {
-      const result = await getSettings()
-      if (result.success && result.data) {
-        // Supabase'den gelen verileri state'e aktar
-        const settings = result.data as Record<string, string>
-        setGenelAyarlar({
-          atolyeAdi: settings['atolye_adi'] || '',
-          vergiNo: settings['vergi_no'] || '',
-          vergiDairesi: settings['vergi_dairesi'] || '',
-          adres: settings['adres'] || '',
-          iban: settings['iban'] || '',
-          bankaAdi: settings['banka_adi'] || '',
-          hesapSahibi: settings['hesap_sahibi'] || '',
-        })
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Genel ayar değişikliği
   const handleGenelChange = (field: string, value: string) => {
     setGenelAyarlar((prev) => ({ ...prev, [field]: value }))
   }
 
   // Ayarları Supabase'e kaydet
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
     setSaving(true)
     try {
-      // Genel ayarları Supabase formatına çevir
+      // Genel ayarları Key-Value formatına çevir
       const settingsToSave = {
         atolye_adi: genelAyarlar.atolyeAdi,
         vergi_no: genelAyarlar.vergiNo,
@@ -88,16 +59,15 @@ export default function Ayarlar() {
         iban: genelAyarlar.iban,
         banka_adi: genelAyarlar.bankaAdi,
         hesap_sahibi: genelAyarlar.hesapSahibi,
+        language: language,
       }
 
       const result = await updateSettings(settingsToSave)
 
       if (result.success) {
         showToast(t('settings_saved'), 'success')
-        // Verileri yeniden yükle
-        await fetchSettings()
       } else {
-        showToast(t('error_prefix') + result.error, 'error')
+        showToast(t('error_prefix') + t(result.error || 'error_generic'), 'error')
       }
     } catch (error) {
       console.error('Error saving settings:', error)
@@ -119,7 +89,7 @@ export default function Ayarlar() {
           {t('settings')}
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
-          {language === 'tr' ? 'Uygulama ve hesap ayarlarınızı yönetin' : language === 'en' ? 'Manage your application and account settings' : 'إدارة إعدادات التطبيق والحساب'}
+          {t('settings_description')}
         </p>
       </motion.div>
 
@@ -128,11 +98,11 @@ export default function Ayarlar() {
         <div className="flex items-center justify-center py-20 mt-8">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-400">{t('settings_loading')}</p>
+            <p className="text-slate-600 dark:text-slate-400">{t('loading')}</p>
           </div>
         </div>
       ) : (
-        <div className="mt-8 space-y-6 max-w-4xl">
+        <form onSubmit={handleSave} className="mt-8 space-y-6 max-w-4xl">
           {/* Genel Ayarlar - Supabase'den yükleniyor */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -150,76 +120,82 @@ export default function Ayarlar() {
               {/* Atölye Adı */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <Building2 className="w-4 h-4" /> {t('workshop_name')}
+                  <Building2 className="w-4 h-4" /> {t('workshop_name')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={genelAyarlar.atolyeAdi}
                   onChange={(e) => handleGenelChange('atolyeAdi', e.target.value)}
                   placeholder={t('enter_workshop_name')}
+                  required
                   className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               {/* Vergi No */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <FileText className="w-4 h-4" /> {t('tax_number')}
+                  <FileText className="w-4 h-4" /> {t('tax_number')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={genelAyarlar.vergiNo}
                   onChange={(e) => handleGenelChange('vergiNo', e.target.value)}
                   placeholder={t('enter_tax_number')}
+                  required
                   className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               {/* Vergi Dairesi */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <Receipt className="w-4 h-4" /> {t('tax_office')}
+                  <Receipt className="w-4 h-4" /> {t('tax_office')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={genelAyarlar.vergiDairesi}
                   onChange={(e) => handleGenelChange('vergiDairesi', e.target.value)}
                   placeholder={t('enter_tax_office')}
+                  required
                   className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               {/* Adres */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <MapPin className="w-4 h-4" /> {t('address')}
+                  <MapPin className="w-4 h-4" /> {t('adres')} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={genelAyarlar.adres}
                   onChange={(e) => handleGenelChange('adres', e.target.value)}
                   rows={3}
-                  placeholder={t('enter_address')}
+                  placeholder={t('enter_adres')}
+                  required
                   className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 />
               </div>
               {/* IBAN */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <CreditCard className="w-4 h-4" /> {t('iban')}
+                  <CreditCard className="w-4 h-4" /> {t('iban')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={genelAyarlar.iban}
                   onChange={(e) => handleGenelChange('iban', e.target.value)}
                   placeholder={t('enter_iban')}
+                  required
                   className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               {/* Banka Adı - Select */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <Banknote className="w-4 h-4" /> {t('bank_name')}
+                  <Banknote className="w-4 h-4" /> {t('bank_name')} <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={genelAyarlar.bankaAdi}
                   onChange={(e) => handleGenelChange('bankaAdi', e.target.value)}
+                  required
                   className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">{t('select_bank')}</option>
@@ -236,13 +212,14 @@ export default function Ayarlar() {
               {/* Hesap Sahibi */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  <User className="w-4 h-4" /> {t('account_holder')}
+                  <User className="w-4 h-4" /> {t('account_holder')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={genelAyarlar.hesapSahibi}
                   onChange={(e) => handleGenelChange('hesapSahibi', e.target.value)}
                   placeholder={t('enter_account_holder')}
+                  required
                   className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -283,7 +260,7 @@ export default function Ayarlar() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleSave}
+              type="submit"
               disabled={saving}
               className="flex items-center gap-2 px-8 py-3 bg-indigo-500 text-white rounded-xl font-bold hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -300,7 +277,7 @@ export default function Ayarlar() {
               )}
             </motion.button>
           </div>
-        </div>
+        </form>
       )}
     </main>
   )

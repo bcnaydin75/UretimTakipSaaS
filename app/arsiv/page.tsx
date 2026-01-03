@@ -54,14 +54,14 @@ export default function Arsiv() {
                     .map((monthKey) => {
                         const orders = grouped[monthKey]
                         const date = new Date(monthKey + '-01')
-                        const monthNames = [
-                            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-                            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+                        const monthKeys = [
+                            'january', 'february', 'march', 'april', 'may', 'june',
+                            'july', 'august', 'september', 'october', 'november', 'december'
                         ]
 
                         return {
                             month: monthKey,
-                            monthName: `${monthNames[date.getMonth()]} ${date.getFullYear()}`,
+                            monthName: `${t(monthKeys[date.getMonth()])} ${date.getFullYear()}`,
                             orders,
                             totalRevenue: orders.reduce((sum, o) => sum + o.price, 0),
                             totalOrders: orders.length,
@@ -80,7 +80,8 @@ export default function Arsiv() {
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString)
-        return date.toLocaleDateString('tr-TR', {
+        const locale = language === 'tr' ? 'tr-TR' : language === 'en' ? 'en-US' : 'ar-SA'
+        return date.toLocaleDateString(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -103,7 +104,7 @@ export default function Arsiv() {
                     </h1>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400">
-                    {language === 'tr' ? 'Aylık satış raporları ve detayları' : language === 'en' ? 'Monthly sales reports and details' : 'تقارير المبيعات الشهرية والتفاصيل'}
+                    {t('general_archive_description')}
                 </p>
             </motion.div>
 
@@ -118,18 +119,18 @@ export default function Arsiv() {
                         className="mb-6 flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5" />
-                        {language === 'tr' ? 'Geri Dön' : language === 'en' ? 'Go Back' : 'رجوع'}
+                        {t('go_back')}
                     </button>
 
                     <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700 mb-6">
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-6">
-                            {selectedMonthData.monthName} Detayları
+                            {selectedMonthData.monthName} {t('details')}
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">{t('total_revenue')}</p>
                                 <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                                    {formatPrice(selectedMonthData.totalRevenue)} TL
+                                    {formatPrice(selectedMonthData.totalRevenue)} {t('currency_tl')}
                                 </p>
                             </div>
                             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -161,7 +162,7 @@ export default function Arsiv() {
                                                 {order.product_name}
                                             </p>
                                             <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                Müşteri: {order.customer_name}
+                                                {t('customer')}: {order.customer_name}
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
                                                 {formatDate(order.created_at)}
@@ -169,11 +170,11 @@ export default function Arsiv() {
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-indigo-600 dark:text-indigo-400">
-                                                {formatPrice(order.price)} TL
+                                                {formatPrice(order.price)} {t('currency_tl')}
                                             </p>
                                             {order.quantity && order.unit_price && (
                                                 <p className="text-xs text-slate-500 dark:text-slate-500">
-                                                    {order.quantity} adet × {formatPrice(order.unit_price)} TL
+                                                    {order.quantity} {t('pcs')} × {formatPrice(order.unit_price)} {t('currency_tl')}
                                                 </p>
                                             )}
                                         </div>
@@ -204,23 +205,23 @@ export default function Arsiv() {
                                 <div className="flex justify-between items-center">
                                     <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1">
                                         <DollarSign className="w-4 h-4" />
-                                        Toplam Gelir
+                                        {t('total_revenue')}
                                     </span>
                                     <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                                        {formatPrice(month.totalRevenue)} TL
+                                        {formatPrice(month.totalRevenue)} {t('currency_tl')}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1">
                                         <Package className="w-4 h-4" />
-                                        Sipariş Sayısı
+                                        {t('total_orders')}
                                     </span>
                                     <span className="font-semibold">{month.totalOrders}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1">
                                         <Users className="w-4 h-4" />
-                                        Müşteri Sayısı
+                                        {t('unique_customers')}
                                     </span>
                                     <span className="font-semibold">{month.uniqueCustomers}</span>
                                 </div>

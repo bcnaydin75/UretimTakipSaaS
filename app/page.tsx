@@ -115,7 +115,7 @@ export default function Dashboard() {
                         {t('dashboard')}
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400">
-                        {language === 'tr' ? 'Üretim durumunuzun genel görünümü' : language === 'en' ? 'Overview of your production status' : 'نظرة عامة على حالة الإنتاج'}
+                        {t('dashboard_description')}
                     </p>
                 </div>
                 <motion.button
@@ -222,7 +222,7 @@ export default function Dashboard() {
                                     {t('monthly_revenue')}
                                 </p>
                                 <p className="text-3xl font-bold mt-2 text-green-600 dark:text-green-400">
-                                    ₺{new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(monthlyRevenue)}
+                                    {t('currency_symbol')}{new Intl.NumberFormat(language === 'tr' ? 'tr-TR' : language === 'en' ? 'en-US' : 'ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(monthlyRevenue)}
                                 </p>
                             </div>
                             <div className="p-3 rounded-lg bg-green-500 dark:bg-green-600">
@@ -243,7 +243,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 mb-6">
                     <Clock className="w-6 h-6 text-orange-500" />
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                        Acil Bekleyen İşler
+                        {t('urgent_pending_tasks')}
                     </h2>
                 </div>
 
@@ -283,7 +283,7 @@ export default function Dashboard() {
                                                 </h3>
                                                 {isCritical && (
                                                     <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full font-medium">
-                                                        KRİTİK
+                                                        {t('critical')}
                                                     </span>
                                                 )}
                                             </div>
@@ -296,7 +296,7 @@ export default function Dashboard() {
                                                 </span>
                                                 {delay > 0 && (
                                                     <span className="text-xs font-medium text-red-600 dark:text-red-400">
-                                                        ⏰ {delay} gün gecikme
+                                                        ⏰ {delay} {t('days_delay')}
                                                     </span>
                                                 )}
                                             </div>
@@ -315,7 +315,7 @@ export default function Dashboard() {
                     </div>
                 ) : (
                     <p className="text-center py-8 text-slate-500 dark:text-slate-400">
-                        Acil bekleyen iş bulunmuyor
+                        {t('no_urgent_orders')}
                     </p>
                 )}
             </motion.div>

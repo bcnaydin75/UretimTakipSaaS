@@ -15,7 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { getAllOrders, updateOrderStatus, deleteOrder, confirmShipment } from '@/app/actions/orders'
-import { supabase } from '@/utils/supabase'
+// import { supabase } from '@/utils/supabase'
 import type { Order } from '@/utils/supabase'
 import { useToast } from '@/contexts/ToastContext'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -161,7 +161,7 @@ export default function UretimTakibi() {
                 )
                 showToast(t('order_updated_success'), 'success')
             } else {
-                showToast(t('error_prefix') + result.error, 'error')
+                showToast(t('error_prefix') + t(result.error || 'error_generic'), 'error')
             }
         } catch (error) {
             console.error('Error updating status:', error)
@@ -189,7 +189,7 @@ export default function UretimTakibi() {
                 )
                 showToast(t('order_back_success'), 'success')
             } else {
-                showToast(t('error_prefix') + result.error, 'error')
+                showToast(t('error_prefix') + t(result.error || 'error_generic'), 'error')
             }
         } catch (error) {
             console.error('Error updating status:', error)
@@ -209,7 +209,7 @@ export default function UretimTakibi() {
                 setCancelOrderId(null)
                 showToast(t('order_cancelled_success'), 'success')
             } else {
-                showToast(t('error_prefix') + result.error, 'error')
+                showToast(t('error_prefix') + t(result.error || 'error_generic'), 'error')
             }
         } catch (error) {
             console.error('Error canceling order:', error)
@@ -239,7 +239,7 @@ export default function UretimTakibi() {
                     setOrders((prev) => prev.filter((order) => order.id !== orderId))
                 }, 1000)
             } else {
-                showToast(t('error_prefix') + result.error, 'error')
+                showToast(t('error_prefix') + t(result.error || 'error_generic'), 'error')
             }
         } catch (error) {
             console.error('Error confirming shipment:', error)
@@ -254,11 +254,12 @@ export default function UretimTakibi() {
         return orders.filter((order) => order.status === asamaId)
     }
 
-    // Tarih formatlama - Türkçe formatında göster
+    // Tarih formatlama - Dinamik dile göre göster
     const formatDate = (dateString: string | null) => {
-        if (!dateString) return 'Belirtilmemiş'
+        if (!dateString) return t('not_specified')
         const date = new Date(dateString)
-        return date.toLocaleDateString('tr-TR')
+        const locale = language === 'tr' ? 'tr-TR' : language === 'en' ? 'en-US' : 'ar-SA'
+        return date.toLocaleDateString(locale)
     }
 
     return (
@@ -273,7 +274,7 @@ export default function UretimTakibi() {
                     {t('production_tracking')}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400">
-                    {language === 'tr' ? 'Tüm üretim aşamalarını takip edin' : language === 'en' ? 'Track all production stages' : 'تتبع جميع مراحل الإنتاج'}
+                    {t('production_tracking_description')}
                 </p>
             </motion.div>
 

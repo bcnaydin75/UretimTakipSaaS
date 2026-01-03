@@ -38,7 +38,6 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
         quantity: '1',
         unit_price: '',
     })
-    const [priceRaw, setPriceRaw] = useState('')
 
     // Müşterileri orders tablosundan yükle
     useEffect(() => {
@@ -95,19 +94,19 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
             const quantity = parseInt(formData.quantity) || 1
 
             if (!formData.dimensions || formData.dimensions.trim() === '') {
-                setError('Ölçüler alanı zorunludur')
+                setError(t('dimensions_required'))
                 setLoading(false)
                 return
             }
 
             if (!formData.price || price <= 0) {
-                setError('Lütfen geçerli bir fiyat girin')
+                setError(t('enter_valid_price'))
                 setLoading(false)
                 return
             }
 
             if (quantity <= 0) {
-                setError('Adet 0\'dan büyük olmalıdır')
+                setError(t('quantity_greater_than_zero'))
                 setLoading(false)
                 return
             }
@@ -138,17 +137,16 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                 })
                 setUseExistingCustomer(false)
                 setSelectedCustomerName('')
-                setPriceRaw('')
-                showToast(t('order_added'), 'success')
+                showToast(t('order_added_success'), 'success')
                 onSuccess()
                 onClose()
             } else {
-                setError(result.error || 'Bir hata oluştu')
-                showToast(result.error || 'Bir hata oluştu', 'error')
+                setError(result.error || t('error_generic'))
+                showToast(result.error || t('error_generic'), 'error')
             }
         } catch (err) {
-            setError('Bir hata oluştu. Lütfen tekrar deneyin.')
-            showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'error')
+            setError(t('error_occurred_try_again'))
+            showToast(t('error_occurred_try_again'), 'error')
         } finally {
             setLoading(false)
         }
@@ -189,9 +187,9 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                         className="fixed inset-0 z-50 flex items-center justify-center p-4"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col">
+                            {/* Header - Sticky */}
+                            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 z-10">
                                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                                     {t('new_order')}
                                 </h2>
@@ -203,234 +201,228 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                                 </button>
                             </div>
 
-                            {/* Form */}
-                            <form onSubmit={handleSubmit} className="p-6">
-                                {error && (
-                                    <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4">
-                                        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                                    </div>
-                                )}
+                            {/* Scrollable Content */}
+                            <div className="flex-1 overflow-y-auto p-6">
+                                <form id="new-order-form" onSubmit={handleSubmit}>
+                                    {error && (
+                                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4">
+                                            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                                        </div>
+                                    )}
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Var Olan Müşteri Checkbox - Full Width */}
-                                    <div className="md:col-span-2 flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            id="useExistingCustomer"
-                                            checked={useExistingCustomer}
-                                            onChange={(e) => {
-                                                setUseExistingCustomer(e.target.checked)
-                                                if (!e.target.checked) {
-                                                    setSelectedCustomerName('')
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        customer_name: '',
-                                                        company_name: '',
-                                                    }))
-                                                }
-                                            }}
-                                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                                        />
-                                        <label htmlFor="useExistingCustomer" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                            {t('existing_customer')}
-                                        </label>
-                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Müşteri Seçimi & Tip Seçimi */}
+                                        <div className="md:col-span-2 space-y-4">
+                                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="useExistingCustomer"
+                                                        checked={useExistingCustomer}
+                                                        onChange={(e) => {
+                                                            setUseExistingCustomer(e.target.checked)
+                                                            if (!e.target.checked) {
+                                                                setSelectedCustomerName('')
+                                                            }
+                                                        }}
+                                                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                                    />
+                                                    <label htmlFor="useExistingCustomer" className="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                                        {t('existing_customer')}
+                                                    </label>
+                                                </div>
+                                                {useExistingCustomer && (
+                                                    <select
+                                                        value={selectedCustomerName}
+                                                        onChange={(e) => setSelectedCustomerName(e.target.value)}
+                                                        className="text-sm px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[200px]"
+                                                    >
+                                                        <option value="">{t('select_customer')}</option>
+                                                        {customers.map((customer, index) => (
+                                                            <option key={index} value={customer.customer_name}>
+                                                                {customer.customer_name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                )}
+                                            </div>
 
-                                    {/* Müşteri Seçimi */}
-                                    {useExistingCustomer ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                        {t('customer_name')} <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="customer_name"
+                                                        value={formData.customer_name}
+                                                        onChange={handleChange}
+                                                        required
+                                                        readOnly={useExistingCustomer}
+                                                        placeholder={t('enter_customer_name')}
+                                                        className={`w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${useExistingCustomer ? 'bg-slate-100 dark:bg-slate-800 cursor-not-allowed' : ''}`}
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                        {t('company_name')}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="company_name"
+                                                        value={formData.company_name}
+                                                        onChange={handleChange}
+                                                        placeholder={t('enter_company_name')}
+                                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Ürün Adı */}
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                {t('customer_name')} <span className="text-red-500">*</span>
+                                                {t('product_name')} <span className="text-red-500">*</span>
                                             </label>
-                                            <select
-                                                value={selectedCustomerName}
-                                                onChange={(e) => setSelectedCustomerName(e.target.value)}
+                                            <input
+                                                type="text"
+                                                name="product_name"
+                                                value={formData.product_name}
+                                                onChange={handleChange}
                                                 required
+                                                placeholder={t('enter_product_name')}
                                                 className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                            >
-                                                <option value="">{t('select_customer')}</option>
-                                                {customers.map((customer, index) => (
-                                                    <option key={index} value={customer.customer_name}>
-                                                        {customer.customer_name}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            />
                                         </div>
+
+                                        {/* Ölçüler - Zorunlu */}
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                {t('dimensions')} <span className="text-red-500">*</span>
+                                            </label>
+                                            <textarea
+                                                name="dimensions"
+                                                value={formData.dimensions}
+                                                onChange={handleChange}
+                                                required
+                                                rows={2}
+                                                placeholder={t('enter_dimensions')}
+                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                            />
+                                        </div>
+
+                                        {/* Adet */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                {t('quantity')} <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="quantity"
+                                                value={formData.quantity}
+                                                onChange={handleChange}
+                                                required
+                                                min="1"
+                                                placeholder={t('enter_quantity')}
+                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            />
+                                        </div>
+
+                                        {/* Birim Fiyat */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                {t('unit_price')} ({t('currency_tl')})
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="unit_price"
+                                                value={formData.unit_price}
+                                                onChange={handleChange}
+                                                placeholder="16.000,00"
+                                                inputMode="numeric"
+                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            />
+                                        </div>
+
+                                        {/* Toplam Fiyat (Otomatik Hesaplanan) */}
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                {t('total_price')} ({t('currency_tl')}) <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="price"
+                                                value={formData.price}
+                                                onChange={handleChange}
+                                                required
+                                                placeholder="16.000,00"
+                                                inputMode="numeric"
+                                                readOnly
+                                                className="w-full max-w-[150px] px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none font-bold"
+                                            />
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                                {t('quantity_unit_price_total')} ({t('calculated_automatically')})
+                                            </p>
+                                        </div>
+
+                                        {/* Teslimat Tarihi */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                {t('delivery_date')}
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="delivery_date"
+                                                value={formData.delivery_date}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            />
+                                        </div>
+
+                                        {/* Acil Mi */}
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                name="is_urgent"
+                                                id="is_urgent"
+                                                checked={formData.is_urgent}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                            />
+                                            <label htmlFor="is_urgent" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                {t('urgent_order')}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* Footer - Sticky */}
+                            <div className="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    {t('cancel')}
+                                </button>
+                                <button
+                                    type="submit"
+                                    form="new-order-form"
+                                    disabled={loading}
+                                    className="flex-1 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            {t('saving')}
+                                        </>
                                     ) : (
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                {t('customer_name')} <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="customer_name"
-                                                value={formData.customer_name}
-                                                onChange={handleChange}
-                                                required
-                                                placeholder={t('enter_customer_name')}
-                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                            />
-                                        </div>
+                                        t('save')
                                     )}
-
-                                    {/* Firma Adı */}
-                                    {!useExistingCustomer && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                {t('company_name')}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="company_name"
-                                                value={formData.company_name}
-                                                onChange={handleChange}
-                                                placeholder={t('enter_company_name')}
-                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Ürün Adı */}
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            {t('product_name')} <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="product_name"
-                                            value={formData.product_name}
-                                            onChange={handleChange}
-                                            required
-                                            placeholder={t('enter_product_name')}
-                                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                    </div>
-
-                                    {/* Ölçüler - Zorunlu */}
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            {t('dimensions')} <span className="text-red-500">*</span>
-                                        </label>
-                                        <textarea
-                                            name="dimensions"
-                                            value={formData.dimensions}
-                                            onChange={handleChange}
-                                            required
-                                            rows={2}
-                                            placeholder={t('enter_dimensions')}
-                                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                                        />
-                                    </div>
-
-                                    {/* Adet */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            {t('quantity')} <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            name="quantity"
-                                            value={formData.quantity}
-                                            onChange={handleChange}
-                                            required
-                                            min="1"
-                                            placeholder={t('enter_quantity')}
-                                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                    </div>
-
-                                    {/* Birim Fiyat */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            {t('unit_price')} (TL)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="unit_price"
-                                            value={formData.unit_price}
-                                            onChange={handleChange}
-                                            placeholder={language === 'tr' ? '16.000,00' : '16.000,00'}
-                                            inputMode="numeric"
-                                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                    </div>
-
-                                    {/* Toplam Fiyat (Otomatik Hesaplanan) */}
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            {t('total_price')} (TL) <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="price"
-                                            value={formData.price}
-                                            onChange={handleChange}
-                                            required
-                                            placeholder={language === 'tr' ? '16.000,00' : '16.000,00'}
-                                            inputMode="numeric"
-                                            readOnly
-                                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                            {language === 'tr' ? 'Adet × Birim Fiyat = Toplam Fiyat (otomatik hesaplanır)' : language === 'en' ? 'Quantity × Unit Price = Total Price (calculated automatically)' : 'الكمية × سعر الوحدة = السعر الإجمالي (محسوب تلقائياً)'}
-                                        </p>
-                                    </div>
-
-                                    {/* Teslimat Tarihi */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                            {t('delivery_date')}
-                                        </label>
-                                        <input
-                                            type="date"
-                                            name="delivery_date"
-                                            value={formData.delivery_date}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                    </div>
-
-                                    {/* Acil Mi */}
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            name="is_urgent"
-                                            id="is_urgent"
-                                            checked={formData.is_urgent}
-                                            onChange={handleChange}
-                                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                                        />
-                                        <label htmlFor="is_urgent" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                            {t('urgent_order')}
-                                        </label>
-                                    </div>
-
-                                    {/* Butonlar */}
-                                    <div className="md:col-span-2 flex gap-3 pt-4">
-                                        <button
-                                            type="button"
-                                            onClick={onClose}
-                                            className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                                        >
-                                            {t('cancel')}
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="flex-1 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                    {t('saving')}
-                                                </>
-                                            ) : (
-                                                t('save')
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 </>

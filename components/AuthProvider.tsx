@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/utils/supabase'
+import { createClient } from '@/utils/supabase-client'
 import type { User } from '@supabase/supabase-js'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface AuthContextType {
     user: User | null
@@ -14,9 +15,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const { t } = useLanguage()
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
     const router = useRouter()
+    const supabase = createClient()
 
     useEffect(() => {
         // Mevcut session'ı kontrol et
@@ -53,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Yükleniyor...</p>
+                    <p className="text-slate-600 dark:text-slate-400">{t('loading')}</p>
                 </div>
             </div>
         )

@@ -3,13 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { supabase } from '@/utils/supabase'
+import { createClient } from '@/utils/supabase-client'
 import { Loader2 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function LoginPage() {
     const { t } = useLanguage()
+    const { showToast } = useToast()
     const router = useRouter()
+    const supabase = createClient()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -33,6 +36,7 @@ export default function LoginPage() {
             }
 
             if (data.user) {
+                showToast(t('login_success'), 'success')
                 router.push('/')
                 router.refresh()
             }
@@ -53,7 +57,7 @@ export default function LoginPage() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-                        ARAY YAZILIM
+                        {t('workshop_default')}
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400">
                         {t('production_tracking_system')}
@@ -109,6 +113,13 @@ export default function LoginPage() {
                         )}
                     </button>
                 </form>
+
+                {/* Footer */}
+                <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 text-center">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        © {t('workshop_footer_default')}
+                    </p>
+                </div>
             </motion.div>
         </div>
     )

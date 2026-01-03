@@ -1,21 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Supabase client oluşturma
-// .env.local dosyasından environment variable'ları okuyoruz
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase environment variables are not set. Please check your .env.local file.')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
 // Veritabanı tip tanımları
 
-// Sipariş tipi - price alanı eklendi
+// Sipariş tipi - user_id eklendi
 export interface Order {
     id: string
+    user_id: string // Kullanıcı ID
     customer_name: string
     company_name: string | null // Firma adı
     product_name: string
@@ -44,19 +32,27 @@ export interface NewOrder {
     unit_price?: number
 }
 
-// Müşteri tipi
+// Müşteri tipi - user_id eklendi
 export interface Customer {
     id: string
+    user_id: string
     name: string
     company_name: string | null
     created_at: string
 }
 
-// Ayarlar tipi
+// Ayarlar tipi - user_id eklendi, flat yapıya geçildi
 export interface Setting {
     id: string
-    key: string
-    value: string
+    user_id: string
+    workshop_name: string | null
+    tax_no: string | null
+    tax_office: string | null
+    adres: string | null
+    iban: string | null
+    bank_name: string | null
+    account_holder: string | null
+    language: string | null
     created_at: string
     updated_at: string
 }

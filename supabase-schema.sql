@@ -1,105 +1,102 @@
--- Supabase Veritabanı Şeması
+-- Supabase Veritabanı Şeması (Multi-tenant Destekli)
 -- Bu SQL kodunu Supabase Dashboard > SQL Editor'de çalıştırın
--- Orders tablosunu oluştur
+-- 1. Orders tablosunu oluştur/güncelle
 CREATE TABLE IF NOT EXISTS orders (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid(),
+    -- Kullanıcı ID
     customer_name TEXT NOT NULL,
+    company_name TEXT,
     product_name TEXT NOT NULL,
     dimensions TEXT,
     status TEXT NOT NULL DEFAULT 'Kesim',
     delivery_date DATE,
     is_urgent BOOLEAN DEFAULT false,
     price NUMERIC(10, 2) DEFAULT 0,
-    -- Fiyat alanı eklendi (TL cinsinden)
+    quantity INTEGER DEFAULT 1,
+    unit_price NUMERIC(12, 2) DEFAULT 0,
+    is_shipped BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 -- Status değerleri için check constraint
+DO $$ BEGIN
 ALTER TABLE orders
 ADD CONSTRAINT status_check CHECK (
         status IN ('Kesim', 'Döşeme', 'Boya', 'Paket', 'Sevk')
     );
--- Index'ler (performans için)
+EXCEPTION
+WHEN duplicate_object THEN null;
+END $$;
+-- Index'ler
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_delivery_date ON orders(delivery_date);
-CREATE INDEX IF NOT EXISTS idx_orders_is_urgent ON orders(is_urgent);
-CREATE INDEX IF NOT EXISTS idx_orders_price ON orders(price);
--- Updated_at otomatik güncelleme için trigger
+-- 2. Settings tablosunu oluştur/güncelle
+-- Key-Value yapısı: Her ayar ayrı bir satır olarak saklanır
+DROP TABLE IF EXISTS settings CASCADE;
+CREATE TABLE settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) DEFAULT auth.uid(),
+    setting_key TEXT NOT NULL,
+    value TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE (user_id, setting_key)
+);
+-- Index'ler
+CREATE INDEX IF NOT EXISTS idx_settings_user_id ON settings(user_id);
+CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(setting_key);
+-- RLS Politikaları
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can only see their own settings" ON settings;
+CREATE POLICY "Users can only see their own settings" ON settings FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+-- Updated_at tetikleyicisi
+DROP TRIGGER IF EXISTS update_settings_updated_at ON settings;
+CREATE TRIGGER update_settings_updated_at BEFORE
+UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- 3. Customers tablosunu oluştur/güncelle
+DROP TABLE IF EXISTS customers CASCADE;
+CREATE TABLE customers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid(),
+    name TEXT NOT NULL,
+    company_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, name)
+);
+CREATE INDEX IF NOT EXISTS idx_customers_user_id ON customers(user_id);
+-- 4. RLS Politikaları (Her kullanıcı sadece kendi verisini görsün)
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+-- Orders politikaları
+DROP POLICY IF EXISTS "Users can only see their own orders" ON orders;
+CREATE POLICY "Users can only see their own orders" ON orders FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+-- Settings politikaları
+DROP POLICY IF EXISTS "Users can only see their own settings" ON settings;
+CREATE POLICY "Users can only see their own settings" ON settings FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+-- Customers politikaları
+DROP POLICY IF EXISTS "Users can only see their own customers" ON customers;
+CREATE POLICY "Users can only see their own customers" ON customers FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+-- 5. Updated_at tetikleyicisi
 CREATE OR REPLACE FUNCTION update_updated_at_column() RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = NOW();
 RETURN NEW;
 END;
 $$ language 'plpgsql';
+DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
 CREATE TRIGGER update_orders_updated_at BEFORE
 UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
--- Row Level Security (RLS) - Tüm kullanıcılar okuyabilsin ve yazabilsin
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Enable all operations for all users" ON orders FOR ALL USING (true) WITH CHECK (true);
--- Settings tablosu oluştur (Ayarlar için)
-CREATE TABLE IF NOT EXISTS settings (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    key TEXT UNIQUE NOT NULL,
-    -- 'atolye_adi', 'vergi_no', 'adres' gibi
-    value TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
--- Settings için index
-CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
--- Settings için trigger (updated_at)
+DROP TRIGGER IF EXISTS update_settings_updated_at ON settings;
 CREATE TRIGGER update_settings_updated_at BEFORE
 UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
--- Settings için RLS
-ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Enable all operations for all users" ON settings FOR ALL USING (true) WITH CHECK (true);
--- Varsayılan ayarları ekle (opsiyonel)
-INSERT INTO settings (key, value)
-VALUES ('atolye_adi', 'İnegöl Mobilya Ltd.'),
-    ('vergi_no', '1234567890'),
-    (
-        'adres',
-        'İnegöl Organize Sanayi Bölgesi, 16400 İnegöl/Bursa'
-    ) ON CONFLICT (key) DO NOTHING;
--- 1. Müşteriler ve Firma Bilgileri Tablosu
-CREATE TABLE IF NOT EXISTS customers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT UNIQUE NOT NULL,
-    company_name TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
--- 2. Mevcut Orders Tablosuna Yeni Sütunlar Ekle
-ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
-ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS unit_price DECIMAL(12, 2) DEFAULT 0;
-ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES customers(id);
--- 3. Aylık Raporlar İçin Görünüm (View) - Otomatik sıfırlama mantığı için
+-- 6. Aylık Raporlar Görünümü (View)
 CREATE OR REPLACE VIEW monthly_stats AS
-SELECT to_char(created_at, 'YYYY-MM') as month_id,
+SELECT user_id,
+    to_char(created_at, 'YYYY-MM') as month_id,
     SUM(price) as total_profit,
     COUNT(id) as total_sales,
     COUNT(DISTINCT customer_name) as unique_customers
 FROM orders
-GROUP BY month_id;
-// Son Ekledıgım Kodlarrr -- 1. Müşteriler ve Firma Bilgileri Tablosu
-CREATE TABLE IF NOT EXISTS customers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT UNIQUE NOT NULL,
-    company_name TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
--- 2. Mevcut Orders Tablosuna Yeni Sütunlar Ekle
-ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
-ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS unit_price DECIMAL(12, 2) DEFAULT 0;
-ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES customers(id);
--- 3. Aylık Raporlar İçin Görünüm (View) - Otomatik sıfırlama mantığı için
-CREATE OR REPLACE VIEW monthly_stats AS
-SELECT to_char(created_at, 'YYYY-MM') as month_id,
-    SUM(price) as total_profit,
-    COUNT(id) as total_sales,
-    COUNT(DISTINCT customer_name) as unique_customers
-FROM orders
-GROUP BY month_id;
+GROUP BY user_id,
+    month_id;

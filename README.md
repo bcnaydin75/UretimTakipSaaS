@@ -1,74 +1,68 @@
-# 🏭 Mobilya Üretim Takip Sistemi
+# 🏭 SaaS Mobilya Üretim Takip Sistemi
 
-Modern, tam kapsamlı bir SaaS Dashboard prototipi. Mobilya atölyesinin üretim sürecini takip etmek için tasarlanmıştır.
+Modern, tam kapsamlı ve çok dilli bir SaaS Üretim Takip Dashboard'u. Mobilya atölyelerinin ve imalatçıların üretim süreçlerini dijitalleştirmek, verimliliği artırmak ve müşteri yönetimini kolaylaştırmak için tasarlanmıştır.
 
-## ✨ Özellikler
+## ✨ Öne Çıkan Özellikler
 
-- 🌓 **Dark/Light Mode**: Kullanıcı tercihine göre tema değiştirme
-- 📱 **Responsive Tasarım**: Mobil ve desktop uyumlu
-- 🎨 **Modern UI**: Tailwind CSS ve Framer Motion ile animasyonlu arayüz
-- 📊 **Dashboard**: Aktif işler, geciken işler ve özet istatistikler
-- 🔄 **Üretim Takibi**: 5 aşamalı interaktif üretim süreci (Kesim ➔ Döşeme ➔ Boya ➔ Paket ➔ Sevk)
-- 📈 **İstatistikler**: Performans metrikleri ve grafikler
-- ⚙️ **Ayarlar**: Profil, bildirim tercihleri ve dil seçimi
+### 🏗️ SaaS Mimarisi & Güvenlik
+- **Multi-tenant Yapı**: Her kullanıcı (atölye) sadece kendi verilerine erişebilir. Veriler `user_id` bazlı tam izolasyon altındadır.
+- **Supabase Kimlik Doğrulama**: Güvenli giriş/çıkış işlemleri ve oturum yönetimi.
+- **Middleware Koruması**: Yetkisiz erişimlerin engellenmesi ve otomatik yönlendirme.
+- **Row Level Security (RLS)**: Veritabanı seviyesinde en üst düzey veri güvenliği.
 
-## 🚀 Kurulum
+### ⚙️ EAV Tabanlı Dinamik Ayarlar
+- **Esnek Ayar Sistemi**: Atölye adı, vergi bilgileri, adres ve banka detayları EAV (Entity-Attribute-Value) yapısında saklanır.
+- **Hızlı Güncelleme**: Tüm ayarlar tek bir form üzerinden dinamik olarak güncellenebilir ve anında sisteme yansır.
+- **Tek Satır Kısıtlaması**: Her kullanıcı için veritabanında tekil bir ayar seti yönetilir (`UNIQUE(user_id, setting_key)`).
 
-1. Bağımlılıkları yükleyin:
+### 🌍 Çok Dilli Yapı (i18n)
+- **3 Dil Desteği**: Türkçe (TR), İngilizce (EN) ve Arapça (AR) dilleri arasında anlık geçiş.
+- **Dinamik Çeviri**: Hata mesajlarından toast bildirimlerine, faturadan dashboard istatistiklerine kadar her şey %100 dile duyarlıdır.
+- **RTL Desteği**: Arapça için sağdan sola okuma uyumluluğu.
+
+### 📑 Dinamik & Kurumsal Fatura Sistemi
+- **Modern Tasarım**: Profesyonel, temiz ve kurumsal fatura görünümü.
+- **Otomatik Hesaplama**: KDV, ara toplam ve genel toplam hesaplamaları otomatik yapılır.
+- **Yazdırılabilir Form**: A4 kağıt boyutuna tam uyumlu, tarayıcı üzerinden doğrudan çıktı alınabilir yapı.
+- **Akıllı Bilgi Çekme**: Müşteri ve firma bilgileri sistemden otomatik çekilerek hatasız fatura oluşturulur.
+
+### 📊 Üretim & Satış Yönetimi
+- **5 Aşamalı Takip**: Kesim ➔ Döşeme ➔ Boya ➔ Paket ➔ Sevk akışıyla gerçek zamanlı üretim izleme.
+- **Satış Arşivi**: Tamamlanan işlerin geçmişe dönük takibi ve raporlanması.
+- **Dashboard Özetleri**: Kritik gecikmeler, aktif siparişler ve aylık performans metrikleri.
+- **Akıllı Müşteri Hafızası**: Önceki siparişlerden müşteri ve firma bilgilerini otomatik hatırlama.
+
+### 📱 Modern UI/UX
+- **Mobil/Tablet Uyumluluk**: Her cihazda kusursuz çalışan responsive tasarım.
+- **Sticky Modallar**: Kaydırılabilir içerik alanı ile ekran dışına taşmayan akıllı modal yapısı.
+- **Dark/Light Mode**: Göz yormayan karanlık tema ve klasik aydınlık tema desteği.
+- **Framer Motion**: Akıcı ve profesyonel arayüz animasyonları.
+
+## 🛠️ Teknolojiler
+
+- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Backend/DB**: Supabase (PostgreSQL, Auth, RLS)
+- **State/Context**: React Context API, Toast Context, Language Context
+- **Animasyon**: Framer Motion
+- **İkonlar**: Lucide React
+
+## 🚀 Hızlı Başlangıç
+
+1. **Bağımlılıkları Yükleyin**:
 ```bash
 npm install
 ```
 
-2. Geliştirme sunucusunu başlatın:
+2. **Çevre Değişkenlerini Ayarlayın**:
+`.env.local` dosyası oluşturun ve Supabase bilgilerinizi ekleyin.
+
+3. **Geliştirme Sunucusunu Başlatın**:
 ```bash
 npm run dev
 ```
 
-3. Tarayıcınızda [http://localhost:3000](http://localhost:3000) adresini açın.
+4. **Kullanıma Hazır**: Tarayıcınızda `localhost:3000` adresine gidin.
 
-## 🛠️ Teknolojiler
+## 📝 Lisans
 
-- **Next.js 14** (App Router)
-- **TypeScript**
-- **Tailwind CSS**
-- **Framer Motion** (Animasyonlar)
-- **Lucide React** (İkonlar)
-
-## 📁 Proje Yapısı
-
-```
-├── app/                    # Next.js App Router sayfaları
-│   ├── page.tsx           # Dashboard ana sayfa
-│   ├── uretim/            # Üretim takibi sayfası
-│   ├── istatistikler/     # İstatistikler sayfası
-│   ├── ayarlar/           # Ayarlar sayfası
-│   └── layout.tsx         # Ana layout
-├── components/             # React bileşenleri
-│   ├── Sidebar.tsx        # Navigasyon menüsü
-│   └── ThemeToggle.tsx    # Tema değiştirme butonu
-├── contexts/              # React Context'leri
-│   └── ThemeContext.tsx   # Tema yönetimi
-└── package.json
-```
-
-## 📝 Öğrenme Notları
-
-Kod içinde detaylı Türkçe yorum satırları bulunmaktadır. Özellikle:
-
-- **State Yönetimi**: `useState` ve `useContext` kullanımı
-- **Tema Değişimi**: Context API ile global state yönetimi
-- **Animasyonlar**: Framer Motion ile yumuşak geçişler
-- **Responsive Tasarım**: Tailwind CSS breakpoint'leri
-
-## 🎯 Gelecek Geliştirmeler
-
-- [ ] API entegrasyonu
-- [ ] Gerçek zamanlı bildirimler
-- [ ] Grafik kütüphanesi entegrasyonu (Chart.js/Recharts)
-- [ ] Kullanıcı kimlik doğrulama
-- [ ] Veritabanı entegrasyonu
-
-## 📄 Lisans
-
-Bu proje eğitim amaçlıdır.
-
+Bu proje eğitim ve portfolyo amaçlıdır.

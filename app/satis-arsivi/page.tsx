@@ -93,7 +93,8 @@ export default function SatisArsivi() {
     // Tarih formatlama
     const formatDate = (dateString: string) => {
         const date = new Date(dateString)
-        return date.toLocaleDateString('tr-TR', {
+        const locale = language === 'tr' ? 'tr-TR' : language === 'en' ? 'en-US' : 'ar-SA'
+        return date.toLocaleDateString(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -111,11 +112,11 @@ export default function SatisArsivi() {
                 <div className="flex items-center gap-3 mb-2">
                     <Archive className="w-8 h-8 text-indigo-500" />
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">
-                        Satış Arşivi
+                        {t('sales_archive')}
                     </h1>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400">
-                    Tamamlanmış ve sevk edilmiş tüm siparişler
+                    {t('completed_orders')}
                 </p>
             </motion.div>
 
@@ -138,7 +139,7 @@ export default function SatisArsivi() {
                 <div className="flex items-center justify-center py-20 mt-8">
                     <div className="text-center">
                         <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto mb-4" />
-                        <p className="text-slate-600 dark:text-slate-400">Satışlar yükleniyor...</p>
+                        <p className="text-slate-600 dark:text-slate-400">{t('sales_loading')}</p>
                     </div>
                 </div>
             ) : filteredOrders.length > 0 ? (
@@ -155,7 +156,7 @@ export default function SatisArsivi() {
                             {/* Müşteri Adı */}
                             <div className="mb-4">
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                                    Müşteri
+                                    {t('customer')}
                                 </p>
                                 <p className="font-semibold text-slate-800 dark:text-slate-200">
                                     {order.customer_name}
@@ -165,7 +166,7 @@ export default function SatisArsivi() {
                             {/* Ürün Adı */}
                             <div className="mb-4">
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                                    Ürün
+                                    {t('product')}
                                 </p>
                                 <p className="font-medium text-slate-700 dark:text-slate-300">
                                     {order.product_name}
@@ -175,10 +176,10 @@ export default function SatisArsivi() {
                             {/* Satış Fiyatı - Büyük Punto */}
                             <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                                    Satış Fiyatı
+                                    {t('sale_price')}
                                 </p>
                                 <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                                    {formatPrice(order.price)} TL
+                                    {formatPrice(order.price)} {t('currency_tl')}
                                 </p>
                             </div>
 
@@ -202,7 +203,7 @@ export default function SatisArsivi() {
                 <div className="mt-8 bg-white dark:bg-slate-800 rounded-xl p-12 shadow-lg border border-slate-200 dark:border-slate-700 text-center">
                     <Archive className="w-16 h-16 text-slate-400 mx-auto mb-4" />
                     <p className="text-lg font-semibold text-slate-600 dark:text-slate-400">
-                        {searchQuery ? 'Arama sonucu bulunamadı' : 'Henüz tamamlanmış sipariş bulunmuyor'}
+                        {searchQuery ? t('search_no_results') : t('no_completed_orders_yet')}
                     </p>
                 </div>
             )}
@@ -225,8 +226,9 @@ export default function SatisArsivi() {
                             className="fixed inset-0 z-50 flex items-center justify-center p-4"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+                                {/* Header - Sticky */}
+                                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 z-10 no-print">
                                     <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                                         {t('invoice')}
                                     </h2>
@@ -238,140 +240,172 @@ export default function SatisArsivi() {
                                     </button>
                                 </div>
 
-                                <div className="p-8">
-                                    {/* Logo ve Firma Bilgileri */}
-                                    <div className="text-center mb-8">
-                                        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-                                            ARAY YAZILIM
-                                        </h1>
-                                        <p className="text-slate-600 dark:text-slate-400 text-lg">
-                                            {settings['atolye_adi'] || t('workshop_name')}
-                                        </p>
-                                        {settings['adres'] && (
-                                            <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
-                                                {settings['adres']}
-                                            </p>
-                                        )}
-                                        {settings['vergi_no'] && (
-                                            <p className="text-sm text-slate-500 dark:text-slate-500">
-                                                {t('tax_number')}: {settings['vergi_no']}
-                                            </p>
-                                        )}
-                                        {settings['vergi_dairesi'] && (
-                                            <p className="text-sm text-slate-500 dark:text-slate-500">
-                                                {t('tax_office')}: {settings['vergi_dairesi']}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Alıcı Bilgileri */}
-                                    <div className="mb-8 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-                                            {language === 'tr' ? 'Alıcı Bilgileri' : language === 'en' ? 'Buyer Information' : 'معلومات المشتري'}
-                                        </h3>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                                <span className="text-slate-600 dark:text-slate-400">{t('customer_name')}:</span>
-                                                <span className="font-semibold">{selectedOrder.customer_name}</span>
+                                {/* Scrollable Content */}
+                                <div className="flex-1 overflow-y-auto p-8 invoice-container">
+                                    {/* Modern Header */}
+                                    <div className="flex justify-between items-center mb-10 border-b-2 border-slate-800 pb-8">
+                                        <div>
+                                            <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">
+                                                {settings['atolye_adi'] || t('workshop_default')}
+                                            </h1>
+                                        </div>
+                                        <div className="text-right">
+                                            <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase leading-none">
+                                                {t('invoice')}
+                                            </h2>
+                                            <div className="text-sm text-slate-600 dark:text-slate-400 mt-3 space-y-1">
+                                                <p><span className="font-bold">{t('invoice_number')}:</span> #{selectedOrder.id.slice(0, 8).toUpperCase()}</p>
+                                                <p><span className="font-bold">{t('date')}:</span> {formatDate(selectedOrder.created_at)}</p>
                                             </div>
-                                            {selectedOrder.company_name && (
-                                                <div className="flex justify-between">
-                                                    <span className="text-slate-600 dark:text-slate-400">{t('company_name')}:</span>
-                                                    <span className="font-semibold">{selectedOrder.company_name}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Bilgi Sütunları (Alıcı & Satıcı) */}
+                                    <div className="grid grid-cols-2 gap-12 mb-10">
+                                        {/* Satıcı Bilgileri */}
+                                        <div>
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                                                {t('seller_info')}
+                                            </h3>
+                                            <div className="space-y-1 text-slate-800 dark:text-slate-200">
+                                                <p className="font-bold text-lg">{settings['atolye_adi'] || t('workshop_default')}</p>
+                                                <p className="text-sm leading-relaxed">{settings['adres'] || t('not_specified')}</p>
+                                                <div className="text-sm mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                                                    <p><span className="font-semibold text-slate-500">{t('tax_office')}:</span> {settings['vergi_dairesi'] || '-'}</p>
+                                                    <p><span className="font-semibold text-slate-500">{t('tax_number')}:</span> {settings['vergi_no'] || '-'}</p>
                                                 </div>
-                                            )}
+                                            </div>
+                                        </div>
+
+                                        {/* Alıcı Bilgileri */}
+                                        <div>
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                                                {t('buyer_info')}
+                                            </h3>
+                                            <div className="space-y-1 text-slate-800 dark:text-slate-200">
+                                                <p className="font-bold text-lg">{selectedOrder.customer_name}</p>
+                                                {selectedOrder.company_name && (
+                                                    <p className="text-md font-medium text-slate-600 dark:text-slate-400">{selectedOrder.company_name}</p>
+                                                )}
+                                                {/* Adres bilgisi siparişte varsa eklenebilir, şu an yok */}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Fatura Detayları */}
-                                    <div className="space-y-4 mb-8">
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-600 dark:text-slate-400">{t('invoice_number')}:</span>
-                                            <span className="font-semibold">{selectedOrder.id.slice(0, 8)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-600 dark:text-slate-400">{t('date')}:</span>
-                                            <span>{formatDate(selectedOrder.created_at)}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Ürün Tablosu */}
-                                    <div className="border-t border-b border-slate-200 dark:border-slate-700 py-4 mb-4">
-                                        <table className="w-full">
+                                    {/* Ürün Tablosu - Modern Zebra Style */}
+                                    <div className="mb-10 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                                        <table className="w-full text-left border-collapse">
                                             <thead>
-                                                <tr className="border-b border-slate-200 dark:border-slate-700">
-                                                    <th className="text-left py-2 text-slate-600 dark:text-slate-400">{t('product')}</th>
-                                                    <th className="text-right py-2 text-slate-600 dark:text-slate-400">{t('quantity')}</th>
-                                                    <th className="text-right py-2 text-slate-600 dark:text-slate-400">{t('unit_price')}</th>
-                                                    <th className="text-right py-2 text-slate-600 dark:text-slate-400">{t('total_price')}</th>
+                                                <tr className="bg-slate-900 text-white">
+                                                    <th className="px-4 py-3 font-bold uppercase text-xs tracking-wider">{t('product')}</th>
+                                                    <th className="px-4 py-3 font-bold uppercase text-xs tracking-wider text-center">{t('quantity')}</th>
+                                                    <th className="px-4 py-3 font-bold uppercase text-xs tracking-wider text-right">{t('unit_price')}</th>
+                                                    <th className="px-4 py-3 font-bold uppercase text-xs tracking-wider text-right">{t('total_price')}</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td className="py-2">{selectedOrder.product_name}</td>
-                                                    <td className="text-right py-2">{selectedOrder.quantity || 1}</td>
-                                                    <td className="text-right py-2">
-                                                        {formatPrice(selectedOrder.unit_price || selectedOrder.price)} TL
+                                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                                <tr className="even:bg-slate-50 dark:even:bg-slate-800/50">
+                                                    <td className="px-4 py-4 text-slate-800 dark:text-slate-200 font-medium">
+                                                        {selectedOrder.product_name}
                                                     </td>
-                                                    <td className="text-right py-2 font-semibold">
-                                                        {formatPrice(selectedOrder.price)} TL
+                                                    <td className="px-4 py-4 text-center text-slate-700 dark:text-slate-300">
+                                                        {selectedOrder.quantity || 1}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-right text-slate-700 dark:text-slate-300">
+                                                        {formatPrice(selectedOrder.unit_price || selectedOrder.price)} {t('currency_tl')}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-right font-bold text-slate-900 dark:text-white">
+                                                        {formatPrice(selectedOrder.price)} {t('currency_tl')}
                                                     </td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                     </div>
 
-                                    {/* Toplam Hesaplamalar */}
-                                    <div className="space-y-2 text-right">
-                                        <div className="flex justify-end gap-4">
-                                            <span className="text-slate-600 dark:text-slate-400">{t('subtotal')}:</span>
-                                            <span>{formatPrice(calculateSubtotal(selectedOrder.price))} TL</span>
+                                    {/* Toplam Hesaplamalar & Alt Bilgi */}
+                                    <div className="flex justify-between items-start">
+                                        {/* Ödeme Bilgileri */}
+                                        <div className="max-w-md">
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                                                {t('payment_info')}
+                                            </h3>
+                                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white">{settings['banka_adi'] || '-'}</p>
+                                                <p className="text-xs text-slate-500 font-mono tracking-tighter">{settings['iban'] || '-'}</p>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{settings['hesap_sahibi'] || '-'}</p>
+                                            </div>
+                                            <p className="text-sm italic text-slate-500 mt-4">
+                                                {t('thank_you_note')}
+                                            </p>
                                         </div>
-                                        <div className="flex justify-end gap-4">
-                                            <span className="text-slate-600 dark:text-slate-400">{t('vat')}:</span>
-                                            <span>{formatPrice(calculateKDV(calculateSubtotal(selectedOrder.price)))} TL</span>
-                                        </div>
-                                        <div className="flex justify-end gap-4 text-xl font-bold pt-2 border-t border-slate-200 dark:border-slate-700">
-                                            <span>{t('grand_total')}:</span>
-                                            <span className="text-indigo-600 dark:text-indigo-400">
-                                                {formatPrice(selectedOrder.price)} TL
-                                            </span>
+
+                                        {/* Hesaplama */}
+                                        <div className="w-64 space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-slate-500 font-medium">{t('subtotal')}:</span>
+                                                <span className="text-slate-900 dark:text-white font-bold">{formatPrice(calculateSubtotal(selectedOrder.price))} {t('currency_tl')}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-slate-500 font-medium">{t('vat')}:</span>
+                                                <span className="text-slate-900 dark:text-white font-bold">{formatPrice(calculateKDV(calculateSubtotal(selectedOrder.price)))} {t('currency_tl')}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pt-3 border-t-2 border-slate-900 dark:border-white">
+                                                <span className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t('grand_total')}:</span>
+                                                <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                                                    {formatPrice(selectedOrder.price)} {t('currency_tl')}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Ödeme Bilgileri - Settings'ten gelen tüm veriler */}
-                                    <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-                                            {t('payment_info')}:
-                                        </p>
-                                        <div className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
-                                            {settings['vergi_no'] && (
-                                                <p>{t('tax_number')}: {settings['vergi_no']}</p>
-                                            )}
-                                            {settings['vergi_dairesi'] && (
-                                                <p>{t('tax_office')}: {settings['vergi_dairesi']}</p>
-                                            )}
-                                            {settings['adres'] && (
-                                                <p>{t('address')}: {settings['adres']}</p>
-                                            )}
-                                            {settings['banka_adi'] && (
-                                                <p>{t('bank_name')}: {settings['banka_adi']}</p>
-                                            )}
-                                            {settings['iban'] && (
-                                                <p className="font-semibold mt-2">{t('iban')}: {settings['iban']}</p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Yazdır Butonu */}
-                                    <div className="mt-6 flex justify-end">
+                                    {/* Yazdır Butonu & CSS */}
+                                    <div className="mt-12 flex justify-end no-print">
                                         <button
                                             onClick={() => window.print()}
-                                            className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
+                                            className="px-8 py-3 bg-slate-900 hover:bg-black text-white rounded-xl transition-all font-bold flex items-center gap-2 shadow-lg hover:shadow-xl active:scale-95"
                                         >
+                                            <FileText className="w-5 h-5" />
                                             {t('print')}
                                         </button>
                                     </div>
+
+                                    <style jsx global>{`
+                                        @media print {
+                                            body * {
+                                                visibility: hidden;
+                                            }
+                                            .invoice-container, .invoice-container * {
+                                                visibility: visible;
+                                            }
+                                            .invoice-container {
+                                                position: absolute;
+                                                left: 0;
+                                                top: 0;
+                                                width: 100%;
+                                                padding: 2cm !important;
+                                                color: black !important;
+                                                background: white !important;
+                                            }
+                                            .no-print {
+                                                display: none !important;
+                                            }
+                                            .dark {
+                                                color-scheme: light !important;
+                                            }
+                                            .invoice-container table thead tr {
+                                                background-color: #0f172a !important;
+                                                -webkit-print-color-adjust: exact;
+                                            }
+                                            .invoice-container table tbody tr:nth-child(even) {
+                                                background-color: #f8fafc !important;
+                                                -webkit-print-color-adjust: exact;
+                                            }
+                                            @page {
+                                                size: A4;
+                                                margin: 0;
+                                            }
+                                        }
+                                    `}</style>
                                 </div>
                             </div>
                         </motion.div>

@@ -173,7 +173,7 @@ export function Sidebar() {
             font-bold 
             text-slate-800 dark:text-slate-200
           ">
-                        🏭 Üretim Takip
+                        🏭 {t('production_tracking')}
                     </h1>
                     {/* Tema değiştirme butonu */}
                     <ThemeToggle />
@@ -235,7 +235,7 @@ export function Sidebar() {
           text-sm 
           text-slate-500 dark:text-slate-400
         ">
-                    <p>© Aray Mobilya İnegöl Atolyesi 1</p>
+                    <p>© {t('workshop_footer_default')}</p>
                 </div>
             </motion.aside>
 
