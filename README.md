@@ -1,4 +1,4 @@
-# 🏭 Aray Yazılım - SaaS Mobilya Üretim Takip Sistemi
+# 🏭  SaaS Mobilya Üretim Takip Sistemi
 
 [![Canlı Demo](https://img.shields.io/badge/🚀-Canlı%20Demo-indigo?style=for-the-badge)](https://uretim-takip-saa-s.vercel.app)
 
