@@ -9,6 +9,8 @@ export interface Order {
     product_name: string
     dimensions: string | null
     status: 'Kesim' | 'Döşeme' | 'Boya' | 'Paket' | 'Sevk'
+    customer_phone: string | null // Müşteri telefon numarası
+    order_number: string | null // Sipariş numarası (YYMM-XXXX)
     delivery_date: string | null
     is_urgent: boolean
     price: number // Fiyat alanı (TL cinsinden)
@@ -22,6 +24,8 @@ export interface Order {
 // Yeni sipariş oluşturma tipi - price eklendi
 export interface NewOrder {
     customer_name: string
+    customer_phone?: string | null // Müşteri telefon numarası
+    order_number?: string | null // Sipariş numarası
     company_name?: string | null // Firma adı
     product_name: string
     dimensions?: string

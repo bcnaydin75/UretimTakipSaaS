@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid(),
     -- Kullanıcı ID
     customer_name TEXT NOT NULL,
+    customer_phone TEXT,
+    order_number TEXT UNIQUE,
     company_name TEXT,
     product_name TEXT NOT NULL,
     dimensions TEXT,
@@ -90,7 +92,34 @@ UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 DROP TRIGGER IF EXISTS update_settings_updated_at ON settings;
 CREATE TRIGGER update_settings_updated_at BEFORE
 UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
--- 6. Aylık Raporlar Görünümü (View)
+-- 7. Sipariş numarası üretme fonksiyonu (YYMM-XXXX)
+CREATE OR REPLACE FUNCTION generate_order_number() RETURNS TRIGGER AS $$
+DECLARE new_order_num TEXT;
+year_month TEXT;
+random_part TEXT;
+BEGIN -- YYMM formatında yıl ve ay al (Örn: 2401)
+year_month := to_char(NOW(), 'YYMM');
+LOOP -- 4 haneli rastgele sayı üret (1000-9999 arası)
+random_part := floor(random() * 9000 + 1000)::TEXT;
+new_order_num := year_month || '-' || random_part;
+-- Eğer bu numara daha önce yoksa döngüden çık
+EXIT
+WHEN NOT EXISTS (
+    SELECT 1
+    FROM orders
+    WHERE order_number = new_order_num
+);
+END LOOP;
+NEW.order_number := new_order_num;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+-- Sipariş eklenmeden önce numarayı otomatik üret
+DROP TRIGGER IF EXISTS trigger_generate_order_number ON orders;
+CREATE TRIGGER trigger_generate_order_number BEFORE
+INSERT ON orders FOR EACH ROW
+    WHEN (NEW.order_number IS NULL) EXECUTE FUNCTION generate_order_number();
+-- 8. Aylık Raporlar Görünümü (View)
 CREATE OR REPLACE VIEW monthly_stats AS
 SELECT user_id,
     to_char(created_at, 'YYYY-MM') as month_id,

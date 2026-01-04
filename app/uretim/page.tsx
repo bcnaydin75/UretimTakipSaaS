@@ -19,6 +19,7 @@ import { getAllOrders, updateOrderStatus, deleteOrder, confirmShipment } from '@
 import type { Order } from '@/utils/supabase'
 import { useToast } from '@/contexts/ToastContext'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { sendSMSNotification, createShipmentMessage } from '@/utils/sms_service'
 
 /**
  * Üretim Takibi Sayfası
@@ -221,10 +222,39 @@ export default function UretimTakibi() {
 
     // Sevkiyat onay fonksiyonu
     const handleConfirmShipment = async (orderId: string) => {
+        const order = orders.find(o => o.id === orderId)
+
+        // Telefon numarası kontrolü
+        if (!order?.customer_phone || order.customer_phone.trim() === '') {
+            showToast(t('phone_required_for_shipment'), 'error')
+            return
+        }
+
+        // Telefon formatı kontrolü (En az 10 rakam olmalı: 05XX XXX XX XX)
+        const digits = order.customer_phone.replace(/\D/g, '')
+        if (digits.length < 10) {
+            showToast(t('invalid_phone_format'), 'error')
+            return
+        }
+
         setUpdating(orderId)
         try {
             const result = await confirmShipment(orderId)
             if (result.success) {
+                // SMS Gönderimi (Arka planda çalışabilir)
+                sendSMSNotification({
+                    to: order.customer_phone,
+                    message: createShipmentMessage(
+                        order.customer_phone,
+                        order.order_number || '---',
+                        order.product_name
+                    )
+                }).then(smsResult => {
+                    if (!smsResult.success) {
+                        console.error('SMS gönderilemedi:', smsResult.error)
+                    }
+                })
+
                 setOrders((prev) =>
                     prev.map((order) =>
                         order.id === orderId

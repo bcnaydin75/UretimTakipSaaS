@@ -25,12 +25,18 @@ export async function createOrder(orderData: NewOrder) {
         if (!user) return { success: false, error: 'auth_error' }
 
         const supabase = createClient()
+
+        // Sipariş numarası üretimi (eğer DB trigger kullanılmazsa)
+        // Ancak DB trigger kullanmak daha sağlıklı olduğu için burada sadece veri geçiyoruz
+
         const { data, error } = await supabase
             .from('orders')
             .insert([
                 {
                     user_id: user.id,
                     customer_name: orderData.customer_name,
+                    customer_phone: orderData.customer_phone || null,
+                    order_number: orderData.order_number || null, // Manuel set edilebilir veya trigger'a bırakılabilir
                     company_name: orderData.company_name || null,
                     product_name: orderData.product_name,
                     dimensions: orderData.dimensions || null,
@@ -422,7 +428,7 @@ export async function getUniqueCustomersFromOrders() {
         const supabase = createClient()
         const { data, error } = await supabase
             .from('orders')
-            .select('customer_name, company_name, created_at')
+            .select('customer_name, company_name, customer_phone, created_at')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
 
@@ -433,13 +439,14 @@ export async function getUniqueCustomersFromOrders() {
 
         if (!data || data.length === 0) return { success: true, data: [] }
 
-        const customerMap = new Map<string, { customer_name: string; company_name: string | null }>()
+        const customerMap = new Map<string, { customer_name: string; company_name: string | null; customer_phone: string | null }>()
         data.forEach((order) => {
             const customerName = order.customer_name
             if (!customerMap.has(customerName)) {
                 customerMap.set(customerName, {
                     customer_name: customerName,
                     company_name: order.company_name,
+                    customer_phone: order.customer_phone,
                 })
             }
         })

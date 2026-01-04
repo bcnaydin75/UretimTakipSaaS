@@ -11,6 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 interface CustomerFromOrders {
     customer_name: string
     company_name: string | null
+    customer_phone: string | null
 }
 
 interface NewOrderModalProps {
@@ -29,6 +30,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
     const [selectedCustomerName, setSelectedCustomerName] = useState<string>('')
     const [formData, setFormData] = useState({
         customer_name: '',
+        customer_phone: '',
         company_name: '',
         product_name: '',
         dimensions: '',
@@ -66,6 +68,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                     ...prev,
                     customer_name: customer.customer_name,
                     company_name: customer.company_name || '',
+                    customer_phone: customer.customer_phone || '',
                 }))
             }
         }
@@ -113,6 +116,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
 
             const result = await createOrder({
                 customer_name: formData.customer_name,
+                customer_phone: formData.customer_phone || null,
                 company_name: formData.company_name || null,
                 product_name: formData.product_name,
                 dimensions: formData.dimensions || undefined,
@@ -126,6 +130,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
             if (result.success) {
                 setFormData({
                     customer_name: '',
+                    customer_phone: '',
                     company_name: '',
                     product_name: '',
                     dimensions: '',
@@ -157,6 +162,25 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
 
         if (name === 'price' || name === 'unit_price') {
             const formatted = formatPriceInput(value)
+            setFormData((prev) => ({ ...prev, [name]: formatted }))
+        } else if (name === 'customer_phone') {
+            // Sadece rakamları al
+            const digits = value.replace(/\D/g, '').slice(0, 11)
+
+            // 05XX XXX XX XX formatına getir
+            let formatted = digits
+            if (digits.length > 0) {
+                if (digits[0] !== '0') formatted = '0' + digits
+
+                if (formatted.length > 4 && formatted.length <= 7) {
+                    formatted = `${formatted.slice(0, 4)} ${formatted.slice(4)}`
+                } else if (formatted.length > 7 && formatted.length <= 9) {
+                    formatted = `${formatted.slice(0, 4)} ${formatted.slice(4, 7)} ${formatted.slice(7)}`
+                } else if (formatted.length > 9) {
+                    formatted = `${formatted.slice(0, 4)} ${formatted.slice(4, 7)} ${formatted.slice(7, 9)} ${formatted.slice(9, 11)}`
+                }
+            }
+
             setFormData((prev) => ({ ...prev, [name]: formatted }))
         } else {
             setFormData((prev) => ({
@@ -274,6 +298,20 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                                                         value={formData.company_name}
                                                         onChange={handleChange}
                                                         placeholder={t('enter_company_name')}
+                                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                        {t('customer_phone')}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="customer_phone"
+                                                        value={formData.customer_phone}
+                                                        onChange={handleChange}
+                                                        placeholder="05XX XXX XX XX"
                                                         className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                                     />
                                                 </div>
