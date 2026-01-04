@@ -1,4 +1,4 @@
-# 🏭  SaaS Mobilya Üretim Takip Sistemi
+# 🏭 Aray Yazılım - SaaS Mobilya Üretim Takip Sistemi
 
 [![Canlı Demo](https://img.shields.io/badge/🚀-Canlı%20Demo-indigo?style=for-the-badge)](https://uretim-takip-saa-s.vercel.app)
 
@@ -32,13 +32,13 @@ Modern, tam kapsamlı ve çok dilli bir SaaS Üretim Takip Dashboard'u. Mobilya 
 - **Satış Arşivi & Performans**: Tamamlanan işlerin geçmişe dönük takibi ve aylık ciro/verimlilik analizleri.
 - **Akıllı Müşteri Hafızası**: Önceki siparişlerden müşteri ve firma bilgilerini otomatik tamamlama özelliği.
 
-## 🔑 Sisteme Erişim
+## 🚀 Sisteme Erişim
 
-Projeye canlı ortamda erişmek ve özelliklerini deneyimlemek için:
+Proje şu an canlı ortamda çalışmaktadır. Herhangi bir yerel kurulum yapmanıza gerek kalmadan aşağıdaki bağlantı üzerinden sisteme erişebilirsiniz:
 
-1. [https://uretim-takip-saa-s.vercel.app](https://uretim-takip-saa-s.vercel.app) adresine gidin.
-2. **Kayıt Ol** veya **Giriş Yap** butonlarını kullanarak kendi güvenli çalışma alanınızı oluşturun.
-3. Giriş yaptıktan sonra **Ayarlar** sekmesinden atölye bilgilerinizi girerek kendi fatura ve üretim şablonunuzu oluşturmaya başlayabilirsiniz.
+**Canlı Uygulama Linki:** [https://uretim-takip-saa-s.vercel.app](https://uretim-takip-saa-s.vercel.app)
+
+> **Not:** Sisteme giriş yapabilmek için geçerli bir kullanıcı hesabı gerekmektedir. Kayıt ve yetkilendirme işlemleri Row Level Security (RLS) ile korunmaktadır.
 
 ## 🛠️ Teknolojiler
 
