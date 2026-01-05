@@ -10,7 +10,7 @@ export interface Order {
     dimensions: string | null
     status: 'Kesim' | 'Döşeme' | 'Boya' | 'Paket' | 'Sevk'
     customer_phone: string | null // Müşteri telefon numarası
-    order_number: string | null // Sipariş numarası (YYMM-XXXX)
+    order_number: string | null // Sipariş numarası (8 Haneli)
     delivery_date: string | null
     is_urgent: boolean
     price: number // Fiyat alanı (TL cinsinden)

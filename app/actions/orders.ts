@@ -194,12 +194,10 @@ export async function getDashboardStats() {
             const createdAt = new Date(o.created_at)
             return createdAt >= thisMonthStart
         }).length
-        const toplamSiparis = orders.length
-        const tamamlananSiparis = orders.filter((o) => o.status === 'Sevk').length
 
         return {
             success: true,
-            stats: { aktifSiparisler, kritikGecikmeler, boyahanedekiIsler, tamamlananBuAy, toplamSiparis, tamamlananSiparis },
+            stats: { aktifSiparisler, kritikGecikmeler, boyahanedekiIsler, tamamlananBuAy },
         }
     } catch (error) {
         console.error('Error fetching dashboard stats:', error)
@@ -229,8 +227,6 @@ export async function getMonthlyRevenue() {
             .from('orders')
             .select('price')
             .eq('user_id', user.id)
-            .eq('status', 'Sevk')
-            .eq('is_shipped', true)
             .gte('created_at', thisMonthStart.toISOString())
             .lte('created_at', thisMonthEnd.toISOString())
 

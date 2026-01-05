@@ -39,8 +39,7 @@ export default function SatisArsivi() {
                 orders.filter(
                     (order) =>
                         order.customer_name.toLowerCase().includes(query) ||
-                        order.product_name.toLowerCase().includes(query) ||
-                        (order.customer_phone && order.customer_phone.replace(/\s+/g, '').includes(query.replace(/\s+/g, '')))
+                        order.product_name.toLowerCase().includes(query)
                 )
             )
         }
@@ -154,8 +153,15 @@ export default function SatisArsivi() {
                             transition={{ duration: 0.3, delay: index * 0.05 }}
                             className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all"
                         >
-                            {/* Müşteri Adı */}
-                            <div className="mb-4">
+                            {/* Sipariş No - Üst Köşe */}
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-[10px] font-extrabold tracking-widest text-white bg-gradient-to-r from-indigo-600 to-blue-500 px-3 py-1.5 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)] uppercase">
+                                    {t('order_number')} : #{order.order_number || t('generating')}
+                                </span>
+                            </div>
+
+                            {/* Müşteri Bilgileri */}
+                            <div className="mb-4 text-left">
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                                     {t('customer')}
                                 </p>
@@ -163,15 +169,15 @@ export default function SatisArsivi() {
                                     {order.customer_name}
                                 </p>
                                 {order.customer_phone && (
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 flex items-center gap-1.5">
-                                        <Phone className="w-3.5 h-3.5 text-indigo-500" />
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 flex items-center gap-2">
+                                        <Phone className="w-4 h-4 text-indigo-500" />
                                         {order.customer_phone}
                                     </p>
                                 )}
                             </div>
 
-                            {/* Ürün Adı */}
-                            <div className="mb-4">
+                            {/* Ürün Bilgileri */}
+                            <div className="mb-4 text-left">
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                                     {t('product')}
                                 </p>
@@ -334,7 +340,7 @@ export default function SatisArsivi() {
                                         {/* Ödeme Bilgileri */}
                                         <div className="max-w-md">
                                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                                                {t('buyer_info')}
+                                                {t('payment_info')}
                                             </h3>
                                             <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
                                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{settings['banka_adi'] || '-'}</p>

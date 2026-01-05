@@ -66,6 +66,16 @@ export default function Ayarlar() {
 
       if (result.success) {
         showToast(t('settings_saved'), 'success')
+        // Form verilerini başarıyla kaydedildikten sonra temizle
+        setGenelAyarlar({
+          atolyeAdi: '',
+          vergiNo: '',
+          vergiDairesi: '',
+          adres: '',
+          iban: '',
+          bankaAdi: '',
+          hesapSahibi: '',
+        })
       } else {
         showToast(t('error_prefix') + t(result.error || 'error_generic'), 'error')
       }

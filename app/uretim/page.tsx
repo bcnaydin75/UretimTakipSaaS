@@ -10,7 +10,8 @@ import {
     Loader2,
     RotateCcw,
     X,
-    Check
+    Check,
+    Phone
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
@@ -137,25 +138,31 @@ export default function UretimTakibi() {
         try {
             const result = await getAllOrders()
             if (result.success) {
-                const allOrders = result.data as Order[]
-                const today = new Date()
-                today.setHours(0, 0, 0, 0)
+                // Sevkiyatı onaylanmış (is_shipped=true) siparişleri filtrele
+                const activeOrders = result.data.filter(order => !order.is_shipped)
+                setOrders(activeOrders)
 
                 // İstatistikleri hesapla
-                const toplam = allOrders.length
-                const tamamlanan = allOrders.filter(o => o.is_shipped).length
-                const devamEden = allOrders.filter(o => !o.is_shipped).length
-                const geciken = allOrders.filter(o => {
-                    if (o.is_shipped || !o.delivery_date) return false
+                const total = result.data.length
+                const completed = result.data.filter(o => o.is_shipped).length
+                const ongoing = activeOrders.length
+
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                const delayed = activeOrders.filter(o => {
+                    if (!o.delivery_date) return false
                     return new Date(o.delivery_date) < today
                 }).length
-                const yuzde = toplam > 0 ? Math.round((tamamlanan / toplam) * 100) : 0
 
-                setStats({ toplam, tamamlanan, devamEden, geciken, yuzde })
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
 
-                // Sevkiyatı onaylanmamış (is_shipped=false) siparişleri filtrele
-                const activeOrders = allOrders.filter(order => !order.is_shipped)
-                setOrders(activeOrders)
+                setStats({
+                    toplam: total,
+                    tamamlanan: completed,
+                    devamEden: ongoing,
+                    geciken: delayed,
+                    yuzde: percentage
+                })
             } else {
                 console.error('Error fetching orders:', result.error)
             }
@@ -285,6 +292,32 @@ export default function UretimTakibi() {
                             : order
                     )
                 )
+
+                // İstatistikleri anlık güncelle (Optimistic Update)
+                setStats(prev => {
+                    const newTamamlanan = prev.tamamlanan + 1
+                    const newDevamEden = Math.max(0, prev.devamEden - 1)
+                    const newYuzde = prev.toplam > 0 ? Math.round((newTamamlanan / prev.toplam) * 100) : 0
+
+                    // Eğer geciken bir iş ise geciken sayısını da azalt
+                    let newGeciken = prev.geciken
+                    if (order.delivery_date) {
+                        const today = new Date()
+                        today.setHours(0, 0, 0, 0)
+                        if (new Date(order.delivery_date) < today) {
+                            newGeciken = Math.max(0, prev.geciken - 1)
+                        }
+                    }
+
+                    return {
+                        ...prev,
+                        tamamlanan: newTamamlanan,
+                        devamEden: newDevamEden,
+                        geciken: newGeciken,
+                        yuzde: newYuzde
+                    }
+                })
+
                 setConfirmShipId(null)
                 showToast(t('shipment_confirmed_success'), 'success')
                 // Siparişi listeden kaldır (artık arşivde)
@@ -331,6 +364,68 @@ export default function UretimTakibi() {
                 </p>
             </motion.div>
 
+            {/* 🔥 Genel Üretim Durumu Paneli */}
+            {!loading && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="mt-8 mb-12 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-200 dark:border-slate-700"
+                >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                <span>🔥</span> {t('general_production_status') || 'Genel Üretim Durumu'}
+                            </h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                {t('production_summary_desc') || 'Tüm siparişlerin genel ilerleme durumu'}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="text-right">
+                                <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                                    %{stats.yuzde}
+                                </span>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    {t('completed') || 'Tamamlanan'}
+                                </p>
+                            </div>
+                            <div className="w-32 md:w-48 h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${stats.yuzde}%` }}
+                                    transition={{ duration: 1, ease: "easeOut" }}
+                                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                            { label: t('total_orders'), value: stats.toplam, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', icon: Package },
+                            { label: t('completed'), value: stats.tamamlanan, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20', icon: Check },
+                            { label: t('in_progress'), value: stats.devamEden, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', icon: Loader2 },
+                            { label: t('delayed'), value: stats.geciken, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20', icon: X },
+                        ].map((stat, i) => (
+                            <div key={i} className={`${stat.bg} p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 transition-all hover:scale-[1.02]`}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className={`p-2 rounded-lg bg-white dark:bg-slate-800 shadow-sm ${stat.color}`}>
+                                        <stat.icon className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">
+                                        {stat.label}
+                                    </span>
+                                </div>
+                                <div className={`text-2xl font-black ${stat.color}`}>
+                                    {stat.value}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+            )}
+
             {/* Loading State */}
             {loading ? (
                 <div className="flex items-center justify-center py-20">
@@ -370,46 +465,65 @@ export default function UretimTakibi() {
                                                 whileHover={{ scale: 1.02, y: -2 }}
                                                 className={`p-4 rounded-lg ${asama.renkAcik} border border-slate-200 dark:border-slate-700 transition-all duration-200 shadow-sm hover:shadow-md relative`}
                                             >
-                                                {/* Geri, İptal ve Sevkiyat Onay İkonları */}
-                                                <div className="absolute top-2 left-2 flex gap-2 z-10">
-                                                    {asama.prevStatus && (
+                                                {/* Üst Başlık Alanı: Geri/İptal ve Onay Butonları */}
+                                                <div className="flex items-center justify-between mb-4 relative z-10">
+                                                    {/* Sol Üst: Geri ve İptal Butonları */}
+                                                    <div className="flex items-center gap-2 flex-shrink-0 min-w-[32px]">
+                                                        {asama.prevStatus && (
+                                                            <button
+                                                                onClick={() => handleStatusBack(order.id, asama.id)}
+                                                                disabled={updating === order.id}
+                                                                className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-md hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
+                                                                title={t('back_to_previous')}
+                                                            >
+                                                                <RotateCcw className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                                                            </button>
+                                                        )}
                                                         <button
-                                                            onClick={() => handleStatusBack(order.id, asama.id)}
+                                                            onClick={() => setCancelOrderId(order.id)}
                                                             disabled={updating === order.id}
-                                                            className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-md hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
-                                                            title={t('back_to_previous')}
+                                                            className="p-1.5 bg-red-500 rounded-lg shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
+                                                            title={t('cancel_order')}
                                                         >
-                                                            <RotateCcw className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                                                            <X className="w-4 h-4 text-white" />
                                                         </button>
-                                                    )}
-                                                    {asama.id === 'Sevk' && !order.is_shipped && (
-                                                        <button
-                                                            onClick={() => setConfirmShipId(order.id)}
-                                                            disabled={updating === order.id}
-                                                            className="p-1.5 bg-green-500 rounded-lg shadow-md hover:bg-green-600 transition-colors disabled:opacity-50"
-                                                            title={t('confirm_shipment')}
-                                                        >
-                                                            <Check className="w-4 h-4 text-white" />
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={() => setCancelOrderId(order.id)}
-                                                        disabled={updating === order.id}
-                                                        className="p-1.5 bg-red-500 rounded-lg shadow-md hover:bg-red-600 transition-colors disabled:opacity-50"
-                                                        title={t('cancel_order')}
-                                                    >
-                                                        <X className="w-4 h-4 text-white" />
-                                                    </button>
+                                                    </div>
+
+                                                    {/* Sağ Üst: Onay Butonu (Sadece Sevk aşamasında) */}
+                                                    <div className="flex-shrink-0 min-w-[32px] flex justify-end">
+                                                        {asama.id === 'Sevk' && !order.is_shipped && (
+                                                            <button
+                                                                onClick={() => setConfirmShipId(order.id)}
+                                                                disabled={updating === order.id}
+                                                                className="p-1.5 bg-green-500 rounded-lg shadow-md hover:bg-green-600 transition-colors disabled:opacity-50"
+                                                                title={t('confirm_shipment')}
+                                                            >
+                                                                <Check className="w-4 h-4 text-white" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
 
-                                                <div className="flex items-start justify-between mb-2 pt-8">
-                                                    <div className="flex-1">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="flex-1 text-left">
+                                                        {/* Sipariş No - Ürün İsminin Üstünde (Mor Tasarım) */}
+                                                        <div className="mb-2">
+                                                            <span className="inline-block text-[10px] font-extrabold tracking-widest text-white bg-gradient-to-r from-indigo-600 to-blue-500 px-3 py-1.5 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)] uppercase">
+                                                                {t('order_number')} : #{order.order_number || t('generating')}
+                                                            </span>
+                                                        </div>
                                                         <p className="font-semibold text-slate-800 dark:text-slate-200 text-base mb-1">
                                                             {order.product_name}
                                                         </p>
                                                         <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
                                                             👤 {order.customer_name}
                                                         </p>
+                                                        {order.customer_phone && (
+                                                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-2">
+                                                                <Phone className="w-4 h-4 text-indigo-500" />
+                                                                {order.customer_phone}
+                                                            </p>
+                                                        )}
                                                         {order.dimensions && (
                                                             <p className="text-xs text-slate-500 dark:text-slate-500 mb-1">
                                                                 📏 {order.dimensions}
@@ -458,72 +572,6 @@ export default function UretimTakibi() {
                         )
                     })}
                 </div>
-            )}
-
-            {/* 🔥 Genel Üretim Durumu */}
-            {!loading && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="mt-12 bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700"
-                >
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                            <span>🔥</span>
-                            {t('general_production_status')}
-                        </h2>
-                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-                            {stats.yuzde}% {t('completed')}
-                        </span>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="w-full h-4 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-8 shadow-inner">
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${stats.yuzde}%` }}
-                            transition={{ duration: 1, ease: "easeOut" }}
-                            className="h-full bg-gradient-to-r from-indigo-500 to-green-500 shadow-[0_0_10px_rgba(99,102,241,0.3)]"
-                        />
-                    </div>
-
-                    {/* Veri Göstergeleri */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700/50">
-                            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold mb-1">
-                                {t('total_orders')}
-                            </p>
-                            <p className="text-2xl font-black text-slate-800 dark:text-slate-200">
-                                {stats.toplam}
-                            </p>
-                        </div>
-                        <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
-                            <p className="text-xs text-green-600 dark:text-green-400 uppercase tracking-wider font-bold mb-1">
-                                {t('completed')}
-                            </p>
-                            <p className="text-2xl font-black text-green-600 dark:text-green-400">
-                                {stats.tamamlanan}
-                            </p>
-                        </div>
-                        <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
-                            <p className="text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wider font-bold mb-1">
-                                {t('in_progress')}
-                            </p>
-                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400">
-                                {stats.devamEden}
-                            </p>
-                        </div>
-                        <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20">
-                            <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wider font-bold mb-1">
-                                {t('delayed')}
-                            </p>
-                            <p className="text-2xl font-black text-red-600 dark:text-red-400">
-                                {stats.geciken}
-                            </p>
-                        </div>
-                    </div>
-                </motion.div>
             )}
 
             {/* İptal Onay Modal */}

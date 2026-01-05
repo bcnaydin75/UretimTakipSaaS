@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Loader2, Zap, AlertCircle } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { createOrder, getUniqueCustomersFromOrders } from '@/app/actions/orders'
 import { formatPriceInput, parsePrice } from '@/utils/priceFormatter'
 import { useToast } from '@/contexts/ToastContext'
@@ -28,7 +28,6 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
     const [useExistingCustomer, setUseExistingCustomer] = useState(false)
     const [customers, setCustomers] = useState<CustomerFromOrders[]>([])
     const [selectedCustomerName, setSelectedCustomerName] = useState<string>('')
-    const [today] = useState(new Date().toISOString().split('T')[0])
     const [formData, setFormData] = useState({
         customer_name: '',
         customer_phone: '',
@@ -101,21 +100,6 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                 setError(t('dimensions_required'))
                 setLoading(false)
                 return
-            }
-
-            if (!formData.delivery_date) {
-                setError(t('delivery_date_required'))
-                setLoading(false)
-                return
-            }
-
-            if (formData.customer_phone && formData.customer_phone.trim() !== '') {
-                const digits = formData.customer_phone.replace(/\D/g, '')
-                if (digits.length < 10) {
-                    setError(t('invalid_phone_format'))
-                    setLoading(false)
-                    return
-                }
             }
 
             if (!formData.price || price <= 0) {
@@ -245,14 +229,9 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                             <div className="flex-1 overflow-y-auto p-6">
                                 <form id="new-order-form" onSubmit={handleSubmit}>
                                     {error && (
-                                        <motion.div
-                                            initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            className="p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-lg mb-4 flex items-center gap-3"
-                                        >
-                                            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                                            <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
-                                        </motion.div>
+                                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4">
+                                            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                                        </div>
                                     )}
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -277,18 +256,24 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                                                     </label>
                                                 </div>
                                                 {useExistingCustomer && (
-                                                    <select
-                                                        value={selectedCustomerName}
-                                                        onChange={(e) => setSelectedCustomerName(e.target.value)}
-                                                        className="text-sm px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[200px]"
-                                                    >
-                                                        <option value="">{t('select_customer')}</option>
-                                                        {customers.map((customer, index) => (
-                                                            <option key={index} value={customer.customer_name}>
-                                                                {customer.customer_name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    customers.length > 0 ? (
+                                                        <select
+                                                            value={selectedCustomerName}
+                                                            onChange={(e) => setSelectedCustomerName(e.target.value)}
+                                                            className="text-sm px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[200px]"
+                                                        >
+                                                            <option value="">{t('select_customer')}</option>
+                                                            {customers.map((customer, index) => (
+                                                                <option key={index} value={customer.customer_name}>
+                                                                    {customer.customer_name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <div className="text-sm px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-medium min-w-[180px]">
+                                                            {t('no_existing_customer') || 'Var olan müşteri yok'}
+                                                        </div>
+                                                    )
                                                 )}
                                             </div>
 
@@ -365,9 +350,9 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                                                 value={formData.dimensions}
                                                 onChange={handleChange}
                                                 required
-                                                rows={1}
+                                                rows={2}
                                                 placeholder={t('enter_dimensions')}
-                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none min-h-[42px]"
+                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                                             />
                                         </div>
 
@@ -418,7 +403,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                                                 placeholder="16.000,00"
                                                 inputMode="numeric"
                                                 readOnly
-                                                className="w-full max-w-[150px] px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:outline-none font-bold shadow-none"
+                                                className="w-full max-w-[150px] px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none font-bold"
                                             />
                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                                 {t('quantity_unit_price_total')} ({t('calculated_automatically')})
@@ -428,37 +413,30 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                                         {/* Teslimat Tarihi */}
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                {t('delivery_date')} <span className="text-red-500">*</span>
+                                                {t('delivery_date')}
                                             </label>
                                             <input
                                                 type="date"
                                                 name="delivery_date"
                                                 value={formData.delivery_date}
                                                 onChange={handleChange}
-                                                required
-                                                min={today}
                                                 className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             />
                                         </div>
 
-                                        {/* Acil Sipariş Butonu (Toggle) */}
-                                        <div className="flex flex-col justify-end">
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, is_urgent: !prev.is_urgent }))}
-                                                className={`
-                                                    flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-all duration-200
-                                                    ${formData.is_urgent
-                                                        ? 'bg-[#D97706] border-[#D97706] text-white shadow-lg shadow-orange-500/30'
-                                                        : 'bg-transparent border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-[#D97706] hover:text-[#D97706]'
-                                                    }
-                                                `}
-                                            >
-                                                <Zap className={`w-4 h-4 ${formData.is_urgent ? 'fill-current' : ''}`} />
-                                                <span className="text-sm font-bold uppercase tracking-wider">
-                                                    {t('urgent_order')}
-                                                </span>
-                                            </button>
+                                        {/* Acil Mi */}
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                name="is_urgent"
+                                                id="is_urgent"
+                                                checked={formData.is_urgent}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                            />
+                                            <label htmlFor="is_urgent" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                {t('urgent_order')}
+                                            </label>
                                         </div>
                                     </div>
                                 </form>

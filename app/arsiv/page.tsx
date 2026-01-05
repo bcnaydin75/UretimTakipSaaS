@@ -99,10 +99,11 @@ export default function Arsiv() {
     const filteredOrders = selectedMonthData?.orders.filter(order => {
         if (!searchQuery.trim()) return true
         const query = searchQuery.toLowerCase()
-        const cleanQuery = query.replace(/\s+/g, '')
+        const cleanQuery = query.replace('#', '').replace(/\s+/g, '')
         return (
             order.customer_name.toLowerCase().includes(query) ||
             order.product_name.toLowerCase().includes(query) ||
+            (order.order_number && order.order_number.includes(cleanQuery.replace('#', ''))) ||
             (order.customer_phone && order.customer_phone.replace(/\s+/g, '').includes(cleanQuery))
         )
     })
@@ -189,23 +190,31 @@ export default function Arsiv() {
                                         className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600"
                                     >
                                         <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-semibold text-slate-800 dark:text-slate-200">
-                                                    {order.product_name}
-                                                </p>
-                                                <div className="flex flex-col gap-0.5 mt-1">
+                                            <div className="text-left">
+                                                {/* Sipariş No - Eski Tasarım */}
+                                                <div className="mb-3">
+                                                    <span className="text-[10px] font-extrabold tracking-widest text-white bg-gradient-to-r from-indigo-600 to-blue-500 px-2 py-1 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)] uppercase">
+                                                        {t('order_number')} : #{order.order_number || t('generating')}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <p className="font-semibold text-slate-800 dark:text-slate-200">
+                                                        {order.product_name}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-col gap-1 mt-1">
                                                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                        {t('customer')}: {order.customer_name}
+                                                        👤 {order.customer_name}
                                                     </p>
                                                     {order.customer_phone && (
-                                                        <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                                            <Phone className="w-3 h-3 text-indigo-500" />
+                                                        <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                                                            <Phone className="w-4 h-4 text-indigo-500" />
                                                             {order.customer_phone}
                                                         </p>
                                                     )}
                                                 </div>
                                                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                                                    {formatDate(order.created_at)}
+                                                    📅 {formatDate(order.created_at)}
                                                 </p>
                                             </div>
                                             <div className="text-right">
