@@ -155,8 +155,8 @@ export default function SatisArsivi() {
                         >
                             {/* Sipariş No - Üst Köşe */}
                             <div className="flex items-center justify-between mb-4">
-                                <span className="text-[10px] font-extrabold tracking-widest text-white bg-gradient-to-r from-indigo-600 to-blue-500 px-3 py-1.5 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)] uppercase">
-                                    {t('order_number')} : #{order.order_number || t('generating')}
+                                <span className={`text-[10px] font-extrabold tracking-widest text-white px-3 py-1.5 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)] uppercase ${order.order_number ? 'bg-gradient-to-r from-indigo-600 to-blue-500' : 'bg-red-500'}`}>
+                                    {t('order_number')} : {order.order_number ? `#${order.order_number}` : 'Hata: No Yok'}
                                 </span>
                             </div>
 

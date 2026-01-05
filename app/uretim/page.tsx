@@ -370,56 +370,48 @@ export default function UretimTakibi() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="mt-8 mb-12 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-200 dark:border-slate-700"
+                    className="mt-8 mb-12 bg-slate-900/90 dark:bg-slate-900/90 rounded-2xl p-6 shadow-2xl border border-slate-800 backdrop-blur-sm"
                 >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                                <span>🔥</span> {t('general_production_status') || 'Genel Üretim Durumu'}
+                    {/* Header: Başlık ve Yüzde Rozeti */}
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl">🔥</span>
+                            <h2 className="text-lg font-bold text-white tracking-tight">
+                                {t('general_production_status') || 'Genel Üretim Durumu'}
                             </h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                {t('production_summary_desc') || 'Tüm siparişlerin genel ilerleme durumu'}
-                            </p>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="text-right">
-                                <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-                                    %{stats.yuzde}
-                                </span>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    {t('completed') || 'Tamamlanan'}
-                                </p>
-                            </div>
-                            <div className="w-32 md:w-48 h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${stats.yuzde}%` }}
-                                    transition={{ duration: 1, ease: "easeOut" }}
-                                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
-                                />
-                            </div>
+                        <div className="px-4 py-1.5 bg-slate-800/80 rounded-full border border-slate-700/50">
+                            <span className="text-xs font-bold text-slate-400">
+                                {stats.yuzde}% {t('completed') || 'Tamamlanan'}
+                            </span>
                         </div>
                     </div>
 
+                    {/* Progress Bar: Geniş ve Gradyanlı */}
+                    <div className="w-full h-4 bg-slate-800/50 rounded-full overflow-hidden mb-8 border border-slate-700/30 p-0.5">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${stats.yuzde}%` }}
+                            transition={{ duration: 1.5, ease: "circOut" }}
+                            className="h-full rounded-full bg-gradient-to-r from-indigo-600 via-teal-400 to-emerald-500 shadow-[0_0_15px_rgba(45,212,191,0.3)]"
+                        />
+                    </div>
+
+                    {/* Bilgi Kartları: Şık ve Minimal */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
-                            { label: t('total_orders'), value: stats.toplam, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', icon: Package },
-                            { label: t('completed'), value: stats.tamamlanan, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20', icon: Check },
-                            { label: t('in_progress'), value: stats.devamEden, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', icon: Loader2 },
-                            { label: t('delayed'), value: stats.geciken, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20', icon: X },
+                            { label: t('total_orders'), value: stats.toplam, color: 'text-white', labelColor: 'text-slate-400', bg: 'bg-slate-800/30' },
+                            { label: t('completed'), value: stats.tamamlanan, color: 'text-emerald-500', labelColor: 'text-emerald-500/80', bg: 'bg-emerald-500/5' },
+                            { label: t('in_progress'), value: stats.devamEden, color: 'text-blue-500', labelColor: 'text-blue-500/80', bg: 'bg-blue-500/5' },
+                            { label: t('delayed'), value: stats.geciken, color: 'text-rose-500', labelColor: 'text-rose-500/80', bg: 'bg-rose-500/5' },
                         ].map((stat, i) => (
-                            <div key={i} className={`${stat.bg} p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 transition-all hover:scale-[1.02]`}>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className={`p-2 rounded-lg bg-white dark:bg-slate-800 shadow-sm ${stat.color}`}>
-                                        <stat.icon className="w-4 h-4" />
-                                    </div>
-                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">
-                                        {stat.label}
-                                    </span>
-                                </div>
-                                <div className={`text-2xl font-black ${stat.color}`}>
+                            <div key={i} className={`${stat.bg} p-5 rounded-xl border border-slate-800/50 transition-all hover:border-slate-700`}>
+                                <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${stat.labelColor}`}>
+                                    {stat.label}
+                                </p>
+                                <p className={`text-3xl font-bold ${stat.color} tracking-tight`}>
                                     {stat.value}
-                                </div>
+                                </p>
                             </div>
                         ))}
                     </div>
@@ -508,8 +500,8 @@ export default function UretimTakibi() {
                                                     <div className="flex-1 text-left">
                                                         {/* Sipariş No - Ürün İsminin Üstünde (Mor Tasarım) */}
                                                         <div className="mb-2">
-                                                            <span className="inline-block text-[10px] font-extrabold tracking-widest text-white bg-gradient-to-r from-indigo-600 to-blue-500 px-3 py-1.5 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)] uppercase">
-                                                                {t('order_number')} : #{order.order_number || t('generating')}
+                                                            <span className={`inline-block text-[10px] font-extrabold tracking-widest text-white px-3 py-1.5 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)] uppercase ${order.order_number ? 'bg-gradient-to-r from-indigo-600 to-blue-500' : 'bg-red-500'}`}>
+                                                                {t('order_number')} : {order.order_number ? `#${order.order_number}` : 'Hata: No Yok'}
                                                             </span>
                                                         </div>
                                                         <p className="font-semibold text-slate-800 dark:text-slate-200 text-base mb-1">

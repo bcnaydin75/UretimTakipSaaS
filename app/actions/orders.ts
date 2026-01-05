@@ -17,6 +17,39 @@ async function getCurrentUser() {
 }
 
 /**
+ * Benzersiz 6 haneli sipariş numarası üretir (Collision check ile)
+ */
+async function generateUniqueOrderNumber(supabase: any): Promise<string> {
+    let orderNumber = ''
+    let isUnique = false
+    let attempts = 0
+    const maxAttempts = 5
+
+    while (!isUnique && attempts < maxAttempts) {
+        // 6 haneli rastgele sayı üret (100000 - 999999)
+        orderNumber = Math.floor(100000 + Math.random() * 900000).toString()
+
+        // Veritabanında kontrol et
+        const { data, error } = await supabase
+            .from('orders')
+            .select('order_number')
+            .eq('order_number', orderNumber)
+            .maybeSingle()
+
+        if (!error && !data) {
+            isUnique = true
+        }
+        attempts++
+    }
+
+    if (!isUnique) {
+        throw new Error('Benzersiz sipariş numarası üretilemedi.')
+    }
+
+    return orderNumber
+}
+
+/**
  * Yeni sipariş ekle - user_id eklendi
  */
 export async function createOrder(orderData: NewOrder) {
@@ -26,8 +59,21 @@ export async function createOrder(orderData: NewOrder) {
 
         const supabase = createClient()
 
-        // Sipariş numarası üretimi (eğer DB trigger kullanılmazsa)
-        // Ancak DB trigger kullanmak daha sağlıklı olduğu için burada sadece veri geçiyoruz
+        // Sipariş numarası kontrolü ve üretimi
+        let finalOrderNumber = orderData.order_number
+        if (!finalOrderNumber || finalOrderNumber.trim() === '') {
+            try {
+                finalOrderNumber = await generateUniqueOrderNumber(supabase)
+            } catch (err) {
+                console.error('Sipariş numarası üretim hatası:', err)
+                return { success: false, error: 'order_number_generation_failed' }
+            }
+        }
+
+        console.log('Yeni sipariş kaydı başlatılıyor:', {
+            customer: orderData.customer_name,
+            orderNumber: finalOrderNumber
+        })
 
         const { data, error } = await supabase
             .from('orders')
@@ -36,7 +82,7 @@ export async function createOrder(orderData: NewOrder) {
                     user_id: user.id,
                     customer_name: orderData.customer_name,
                     customer_phone: orderData.customer_phone || null,
-                    order_number: orderData.order_number || null, // Manuel set edilebilir veya trigger'a bırakılabilir
+                    order_number: finalOrderNumber,
                     company_name: orderData.company_name || null,
                     product_name: orderData.product_name,
                     dimensions: orderData.dimensions || null,
@@ -52,9 +98,16 @@ export async function createOrder(orderData: NewOrder) {
             .single()
 
         if (error) {
-            console.error('Supabase error:', error)
+            console.error('Supabase insert hatası (Orders):', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            })
             return { success: false, error: error.message }
         }
+
+        console.log('Sipariş başarıyla oluşturuldu:', data.id)
 
         revalidatePath('/')
         revalidatePath('/uretim')
@@ -62,7 +115,7 @@ export async function createOrder(orderData: NewOrder) {
 
         return { success: true, data }
     } catch (error) {
-        console.error('Error creating order:', error)
+        console.error('Beklenmedik sipariş oluşturma hatası:', error)
         return { success: false, error: 'error_generic' }
     }
 }

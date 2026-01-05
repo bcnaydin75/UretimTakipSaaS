@@ -4,35 +4,34 @@
 
 /* Global stiller - Tema değişikliklerinde sorunsuz çalışması için */
 @layer base {
-    body {
-        @apply bg-white dark: bg-slate-900 text-gray-900 dark:text-slate-100 transition-colors duration-300;
-    }
+  body {
+    @apply bg-white text-gray-900 transition-colors duration-300 dark:bg-slate-900 dark:text-slate-100;
+  }
 }
 
 /* Özel scrollbar stilleri */
 @layer utilities {
+  /* Global modern scrollbar */
+  *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
 
-    /* Global modern scrollbar */
-    *::-webkit-scrollbar {
-        width: 5px;
-        height: 5px;
-    }
+  *::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
 
-    *::-webkit-scrollbar-track {
-        @apply bg-transparent;
-    }
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-300/50 transition-colors dark:bg-slate-700/50;
+  }
 
-    *::-webkit-scrollbar-thumb {
-        @apply bg-slate-300/50 dark: bg-slate-700/50 rounded-full transition-colors;
-    }
+  *::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-slate-600;
+  }
 
-    *::-webkit-scrollbar-thumb:hover {
-        @apply bg-slate-400 dark: bg-slate-600;
-    }
-
-    /* Firefox için */
-    * {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
-    }
+  /* Firefox için */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+  }
 }
