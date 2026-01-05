@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Calendar, Loader2, DollarSign, Users, Package, ArrowLeft } from 'lucide-react'
+import { Calendar, Loader2, DollarSign, Users, Package, ArrowLeft, Search, Phone } from 'lucide-react'
 import { getAllOrders } from '@/app/actions/orders'
 import type { Order } from '@/utils/supabase'
 import { formatPrice } from '@/utils/priceFormatter'
@@ -22,6 +22,12 @@ export default function Arsiv() {
     const [loading, setLoading] = useState(true)
     const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
     const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
+    const [searchQuery, setSearchQuery] = useState('')
+
+    useEffect(() => {
+        // Ay değiştiğinde aramayı sıfırla
+        setSearchQuery('')
+    }, [selectedMonth])
 
     useEffect(() => {
         fetchMonthlyData()
@@ -90,6 +96,17 @@ export default function Arsiv() {
 
     const selectedMonthData = monthlyData.find(m => m.month === selectedMonth)
 
+    const filteredOrders = selectedMonthData?.orders.filter(order => {
+        if (!searchQuery.trim()) return true
+        const query = searchQuery.toLowerCase()
+        const cleanQuery = query.replace(/\s+/g, '')
+        return (
+            order.customer_name.toLowerCase().includes(query) ||
+            order.product_name.toLowerCase().includes(query) ||
+            (order.customer_phone && order.customer_phone.replace(/\s+/g, '').includes(cleanQuery))
+        )
+    })
+
     return (
         <main className="p-6 md:p-8">
             <motion.div
@@ -147,40 +164,68 @@ export default function Arsiv() {
                             </div>
                         </div>
 
+                        {/* Arama Kutusu */}
+                        <div className="mb-6">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder={t('search')}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                />
+                            </div>
+                        </div>
+
                         <div className="space-y-3">
                             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
                                 {t('sales_details')}
                             </h3>
-                            {selectedMonthData.orders.map((order) => (
-                                <div
-                                    key={order.id}
-                                    className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-semibold text-slate-800 dark:text-slate-200">
-                                                {order.product_name}
-                                            </p>
-                                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                {t('customer')}: {order.customer_name}
-                                            </p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                                                {formatDate(order.created_at)}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-indigo-600 dark:text-indigo-400">
-                                                {formatPrice(order.price)} {t('currency_tl')}
-                                            </p>
-                                            {order.quantity && order.unit_price && (
-                                                <p className="text-xs text-slate-500 dark:text-slate-500">
-                                                    {order.quantity} {t('pcs')} × {formatPrice(order.unit_price)} {t('currency_tl')}
+                            {filteredOrders && filteredOrders.length > 0 ? (
+                                filteredOrders.map((order) => (
+                                    <div
+                                        key={order.id}
+                                        className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600"
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold text-slate-800 dark:text-slate-200">
+                                                    {order.product_name}
                                                 </p>
-                                            )}
+                                                <div className="flex flex-col gap-0.5 mt-1">
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                        {t('customer')}: {order.customer_name}
+                                                    </p>
+                                                    {order.customer_phone && (
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                            <Phone className="w-3 h-3 text-indigo-500" />
+                                                            {order.customer_phone}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                                                    {formatDate(order.created_at)}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-indigo-600 dark:text-indigo-400">
+                                                    {formatPrice(order.price)} {t('currency_tl')}
+                                                </p>
+                                                {order.quantity && order.unit_price && (
+                                                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                                                        {order.quantity} {t('pcs')} × {formatPrice(order.unit_price)} {t('currency_tl')}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm italic">
+                                    {t('search_no_results')}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>

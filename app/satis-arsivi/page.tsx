@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Archive, Loader2, Search, FileText, X } from 'lucide-react'
+import { Archive, Loader2, Search, FileText, X, Phone } from 'lucide-react'
 import { getAllOrders, getSettings } from '@/app/actions/orders'
 import type { Order } from '@/utils/supabase'
 import { formatPrice } from '@/utils/priceFormatter'
@@ -39,7 +39,8 @@ export default function SatisArsivi() {
                 orders.filter(
                     (order) =>
                         order.customer_name.toLowerCase().includes(query) ||
-                        order.product_name.toLowerCase().includes(query)
+                        order.product_name.toLowerCase().includes(query) ||
+                        (order.customer_phone && order.customer_phone.replace(/\s+/g, '').includes(query.replace(/\s+/g, '')))
                 )
             )
         }
@@ -161,6 +162,12 @@ export default function SatisArsivi() {
                                 <p className="font-semibold text-slate-800 dark:text-slate-200">
                                     {order.customer_name}
                                 </p>
+                                {order.customer_phone && (
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                                        <Phone className="w-3.5 h-3.5 text-indigo-500" />
+                                        {order.customer_phone}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Ürün Adı */}
@@ -327,7 +334,7 @@ export default function SatisArsivi() {
                                         {/* Ödeme Bilgileri */}
                                         <div className="max-w-md">
                                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
-                                                {t('payment_info')}
+                                                {t('buyer_info')}
                                             </h3>
                                             <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
                                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{settings['banka_adi'] || '-'}</p>

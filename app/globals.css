@@ -11,19 +11,27 @@
 
 /* Özel scrollbar stilleri */
 @layer utilities {
-    .scrollbar-thin::-webkit-scrollbar {
-        width: 6px;
+    /* Global modern scrollbar */
+    *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
     }
 
-    .scrollbar-thin::-webkit-scrollbar-track {
-        @apply bg-gray-100 dark:bg-slate-800;
+    *::-webkit-scrollbar-track {
+        @apply bg-transparent;
     }
 
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-        @apply bg-gray-300 dark:bg-slate-600 rounded-full;
+    *::-webkit-scrollbar-thumb {
+        @apply bg-slate-300/30 dark:bg-slate-700/30 rounded-full transition-all duration-300;
     }
 
-    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-        @apply bg-gray-400 dark:bg-slate-500;
+    *::-webkit-scrollbar-thumb:hover {
+        @apply bg-slate-400/60 dark:bg-slate-500/60;
+    }
+
+    /* Firefox için */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
     }
 }

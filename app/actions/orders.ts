@@ -227,6 +227,8 @@ export async function getMonthlyRevenue() {
             .from('orders')
             .select('price')
             .eq('user_id', user.id)
+            .eq('status', 'Sevk')
+            .eq('is_shipped', true)
             .gte('created_at', thisMonthStart.toISOString())
             .lte('created_at', thisMonthEnd.toISOString())
 
