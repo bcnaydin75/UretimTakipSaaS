@@ -194,10 +194,12 @@ export async function getDashboardStats() {
             const createdAt = new Date(o.created_at)
             return createdAt >= thisMonthStart
         }).length
+        const toplamSiparis = orders.length
+        const tamamlananSiparis = orders.filter((o) => o.status === 'Sevk').length
 
         return {
             success: true,
-            stats: { aktifSiparisler, kritikGecikmeler, boyahanedekiIsler, tamamlananBuAy },
+            stats: { aktifSiparisler, kritikGecikmeler, boyahanedekiIsler, tamamlananBuAy, toplamSiparis, tamamlananSiparis },
         }
     } catch (error) {
         console.error('Error fetching dashboard stats:', error)

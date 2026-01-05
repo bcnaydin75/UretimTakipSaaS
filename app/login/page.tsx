@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase-client'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useToast } from '@/contexts/ToastContext'
+import Image from 'next/image'
+import arayLogo from '@/logo/aray.png'
 
 export default function LoginPage() {
     const { t } = useLanguage()
@@ -15,6 +17,7 @@ export default function LoginPage() {
     const supabase = createClient()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -55,11 +58,19 @@ export default function LoginPage() {
                 className="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8"
             >
                 {/* Logo */}
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-2">
+                <div className="text-center mb-8 flex flex-col items-center">
+                    <div className="mb-6 relative w-[220px] h-[110px]">
+                        <Image
+                            src={arayLogo}
+                            alt="Aray Yazılım Logo"
+                            className="object-contain w-full h-full"
+                            priority
+                        />
+                    </div>
+                    <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-2 tracking-tight">
                         {t('workshop_default')}
                     </h1>
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-600 dark:text-slate-400 font-medium">
                         {t('production_tracking_system')}
                     </p>
                 </div>
@@ -81,7 +92,8 @@ export default function LoginPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="Admin'den aldığınız e-postayı giriniz"
+                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                         />
                     </div>
 
@@ -89,19 +101,33 @@ export default function LoginPage() {
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             {t('password')}
                         </label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                placeholder="Admin'den aldığınız şifreyi giriniz"
+                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all pr-12"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="w-5 h-5" />
+                                ) : (
+                                    <Eye className="w-5 h-5" />
+                                )}
+                            </button>
+                        </div>
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full px-4 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold"
+                        className="w-full px-4 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 font-bold shadow-none"
                     >
                         {loading ? (
                             <>

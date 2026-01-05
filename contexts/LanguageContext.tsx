@@ -67,6 +67,10 @@ const translations: Record<Language, Record<string, string>> = {
         'critical': 'KRİTİK',
         'days_delay': 'gün gecikme',
         'no_urgent_orders': 'Acil bekleyen iş bulunmuyor',
+        'general_production_status': 'Genel Üretim Durumu',
+        'completed': 'Tamamlanan',
+        'in_progress': 'Devam Eden',
+        'delayed': 'Geciken',
 
         // İstatistikler
         'monthly_production': 'Aylık Üretim',
@@ -266,6 +270,10 @@ const translations: Record<Language, Record<string, string>> = {
         'critical': 'CRITICAL',
         'days_delay': 'days delay',
         'no_urgent_orders': 'No urgent pending tasks',
+        'general_production_status': 'General Production Status',
+        'completed': 'Completed',
+        'in_progress': 'In Progress',
+        'delayed': 'Delayed',
 
         // Statistics
         'monthly_production': 'Monthly Production',
@@ -463,6 +471,10 @@ const translations: Record<Language, Record<string, string>> = {
         'critical': 'حرجي',
         'days_delay': 'أيام تأخير',
         'no_urgent_orders': 'لا توجد مهام عاجلة معلقة',
+        'general_production_status': 'حالة الإنتاج العامة',
+        'completed': 'مكتمل',
+        'in_progress': 'قيد التنفيذ',
+        'delayed': 'متأخر',
 
         // الإحصائيات
         'monthly_production': 'الإنتاج الشهري',

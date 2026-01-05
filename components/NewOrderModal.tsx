@@ -365,9 +365,9 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                                                 value={formData.dimensions}
                                                 onChange={handleChange}
                                                 required
-                                                rows={2}
+                                                rows={1}
                                                 placeholder={t('enter_dimensions')}
-                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none min-h-[42px]"
                                             />
                                         </div>
 
@@ -418,7 +418,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps
                                                 placeholder="16.000,00"
                                                 inputMode="numeric"
                                                 readOnly
-                                                className="w-full max-w-[150px] px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none font-bold"
+                                                className="w-full max-w-[150px] px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:outline-none font-bold shadow-none"
                                             />
                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                                 {t('quantity_unit_price_total')} ({t('calculated_automatically')})

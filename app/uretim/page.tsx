@@ -118,6 +118,13 @@ export default function UretimTakibi() {
     const [updating, setUpdating] = useState<string | null>(null) // Güncelleme durumu
     const [cancelOrderId, setCancelOrderId] = useState<string | null>(null) // İptal edilecek sipariş ID
     const [confirmShipId, setConfirmShipId] = useState<string | null>(null) // Sevkiyat onayı için sipariş ID
+    const [stats, setStats] = useState({
+        toplam: 0,
+        tamamlanan: 0,
+        devamEden: 0,
+        geciken: 0,
+        yuzde: 0
+    })
 
     // Sayfa yüklendiğinde verileri çek
     useEffect(() => {
@@ -130,8 +137,24 @@ export default function UretimTakibi() {
         try {
             const result = await getAllOrders()
             if (result.success) {
-                // Sevkiyatı onaylanmış (is_shipped=true) siparişleri filtrele
-                const activeOrders = result.data.filter(order => !order.is_shipped)
+                const allOrders = result.data as Order[]
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+
+                // İstatistikleri hesapla
+                const toplam = allOrders.length
+                const tamamlanan = allOrders.filter(o => o.is_shipped).length
+                const devamEden = allOrders.filter(o => !o.is_shipped).length
+                const geciken = allOrders.filter(o => {
+                    if (o.is_shipped || !o.delivery_date) return false
+                    return new Date(o.delivery_date) < today
+                }).length
+                const yuzde = toplam > 0 ? Math.round((tamamlanan / toplam) * 100) : 0
+
+                setStats({ toplam, tamamlanan, devamEden, geciken, yuzde })
+
+                // Sevkiyatı onaylanmamış (is_shipped=false) siparişleri filtrele
+                const activeOrders = allOrders.filter(order => !order.is_shipped)
                 setOrders(activeOrders)
             } else {
                 console.error('Error fetching orders:', result.error)
@@ -435,6 +458,72 @@ export default function UretimTakibi() {
                         )
                     })}
                 </div>
+            )}
+
+            {/* 🔥 Genel Üretim Durumu */}
+            {!loading && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="mt-12 bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700"
+                >
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                            <span>🔥</span>
+                            {t('general_production_status')}
+                        </h2>
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
+                            {stats.yuzde}% {t('completed')}
+                        </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-4 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-8 shadow-inner">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${stats.yuzde}%` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                            className="h-full bg-gradient-to-r from-indigo-500 to-green-500 shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                        />
+                    </div>
+
+                    {/* Veri Göstergeleri */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700/50">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold mb-1">
+                                {t('total_orders')}
+                            </p>
+                            <p className="text-2xl font-black text-slate-800 dark:text-slate-200">
+                                {stats.toplam}
+                            </p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
+                            <p className="text-xs text-green-600 dark:text-green-400 uppercase tracking-wider font-bold mb-1">
+                                {t('completed')}
+                            </p>
+                            <p className="text-2xl font-black text-green-600 dark:text-green-400">
+                                {stats.tamamlanan}
+                            </p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wider font-bold mb-1">
+                                {t('in_progress')}
+                            </p>
+                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                                {stats.devamEden}
+                            </p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20">
+                            <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wider font-bold mb-1">
+                                {t('delayed')}
+                            </p>
+                            <p className="text-2xl font-black text-red-600 dark:text-red-400">
+                                {stats.geciken}
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
             )}
 
             {/* İptal Onay Modal */}
